@@ -34,7 +34,28 @@ ps ax | grep 〇〇
 
 ### linuxコマンド メモ
 ```
-cat -n filename    # 行数付きでファイル閲覧
+cat -n filename    行数付きでファイル閲覧
+cat -b filename    行数付きでファイル閲覧(空白行は省く)
+```
+
+<hr>
+
+### 文法 メモ
+```
+if [ $# -ne 1 ];   引数が１つでない場合。$#で引数の数を取得する。
+```
+
+<hr>
+
+### 数値の比較演算子
+
+```
+-eq  => equal 同じ
+-ne  => not equal 同じでない
+-ge  => great equal 以上
+-gt  => great than  より大きい
+-le  => less equal  以下
+-lt  => less than   より小さい
 ```
 
 <hr>
@@ -42,7 +63,7 @@ cat -n filename    # 行数付きでファイル閲覧
 ### 外部ファイルを用いた四則演算
 
 ```
-function calcurate_sum(){
+function calculate_sum(){
 	sum=0
         while read p;
         do
@@ -52,7 +73,7 @@ function calcurate_sum(){
  	exit 0
 }
 
-function calcurate_average(){
+function calculate_average(){
 	sum=0
         count=0
         while read p;
@@ -65,7 +86,7 @@ function calcurate_average(){
 }
 
 
-function calcurate_max(){
+function calculate_max(){
 	max=0
 	while read p;
 	do
@@ -78,7 +99,7 @@ function calcurate_max(){
 	exit 0
 }
 
-function calcurate_min(){
+function calculate_min(){
 	min=101
 	while read p;
 	do
@@ -98,16 +119,16 @@ then
 	read -p 'choose from ( sum, avg, min, max, exit ) ' command
 	if [ $command = 'sum' ];
 	then
-		calcurate_sum $fh
+		calculate_sum $fh
 	elif [ $command = 'avg' ];
 	then
-		calcurate_average $fh
+		calculate_average $fh
 	elif [ $command = 'max' ];
 	then
-		calcurate_max $fh
+		calculate_max $fh
 	elif [ $command = 'min' ];
 	then
-		calcurate_min $fh
+		calculate_min $fh
 	elif [ $command = 'exit' ];
 	then
 		echo 'exit'
@@ -120,6 +141,63 @@ else
 	echo 'that file dose not exist'
 	exit 1
 fi
+```
+
+<hr>
+
+### ファイルの操作
+
+```
+-d	引数がディレクトリであれば真
+-e	引数が存在すれば真
+-f	引数がファイルであれば真
+-h	引数シンボリックリンクであれば真
+-s	引数が存在し、空ファイルでなければ真
+-r	引数がREAD許可されていれば真
+-w	引数がWRITE許可されていれば真
+-x	引数が実行許可されていれば真
+-ef	引数がハードリンクであれば真
+file1 -ot file2	 file1がfile2より古い場合真  -ot => older than
+file1 -nt file2	 file1がfile2より新しい場合真  -nt => newer than
+```
+
+```
+select command in 'list' 'delete' 'rename' 'copy' 'show' 'exit'
+do
+	case $command in
+	'list' )
+		ls;;
+	'delete')
+		ls
+		read -p 'Enter file name want to delete: ' file_name
+		if [ -f $file_name ];
+		then
+			rm $file_name
+		fi;;
+	'rename')
+		ls
+		read -p 'Enter file name you want to rename: ' file_name
+		read -p 'Enter new file name: ' new_file_name
+		if [ -f $file_name ];
+		then
+			mv $file_name $new_file_name
+		fi;;
+	'copy')
+		ls
+		read -p 'Enter file name you want to copy: ' file_name
+		read -p 'Enter file name after coping: ' new_file_name
+		if [ -f $file_name ];
+		then
+			cp $file_name $new_file_name
+		fi;;
+	'show')
+		ls
+		read -p 'Enter file name you want to look: ' file_name
+		cat $file_name;;
+	'exit')
+		break;;
+	esac
+done
 ```
 
 <hr>

@@ -1,5 +1,13 @@
 <hr>
 
+### ディストリビューション（配布形式）
+
+配布形式...Slackware系、Redhat系、Debian系。カーネル(OS本体)とソフトウェアパッケージ群が一体となってLinuxOSとして配布される。
+
+https://lpi.or.jp/lpic_all/linux/intro/intro02.shtml
+
+<hr>
+
 ### シグナル番号
 
 * シグナル番号・・・プロセスとプロセスの間で通信を行う際に使用される番号であり、シグナルを受け取ったプロセスは番号に対応する処理を行う。
@@ -28,6 +36,45 @@ kill -KILL PID
 * killしたいプロセスを探す。 puma unicorn など
 ```
 ps ax | grep 〇〇
+```
+
+<hr>
+
+### trapコマンド
+実行中のプロセスから放出されるシグナルを検知し、指定された処理を返す。
+http://peace3110.oops.jp/unix-linux-%E3%82%B7%E3%82%B0%E3%83%8A%E3%83%AB%E3%81%A8%E3%83%88%E3%83%A9%E3%83%83%E3%83%97/
+
+```
+if [ $# -ne 1 ];  # $#でファイル実行時の引数の数を取得する。-ne not equal
+then
+        echo 'argument is wrong'
+        exit 1
+fi
+
+# プロセスが シグナル2(強制終了)かシグナル15（正常終了）した場合、ロックファイルを削除する
+function delete_lock_file() {
+        rm sample.lock
+        exit 0
+}
+
+if [ $1 = 'start' ];
+then
+        if [ -f 'exam7.lock' ];
+        then
+                echo 'process is already running'
+                exit 0
+        else
+                echo $$ > sample.lock              # lockファイルにPIDを書き込む。lockファイルは実行中なので触るべからずを意味し、処理終了時に消去するのが一般的。
+                trap "delete_lock_file" 2 15       # 割り込みまたは正常終了した場合stop_process関数を実行する
+                for i in `seq 1 1000`;             # メインの実行処理。1から1000までファイルに書き込む。
+                do
+                        echo $i >> output_$$.txt
+                        sleep 1
+                done
+                rm sample.lock
+                exit 0
+        fi
+fi
 ```
 
 <hr>
@@ -202,3 +249,16 @@ done
 
 <hr>
 
+### ShellScriptのデバッグ
+
+```
+#!/bin/bash -x     # ファイル自体がデバッグモードになる
+
+set -x             # set-x と set+x の間がデバッグモードになる
+echo Hello
+set +x
+
+bash -x base19.sh  # ファイルをデバッグモードで実行する
+```
+
+<hr>

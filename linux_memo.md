@@ -8,7 +8,7 @@ https://lpi.or.jp/lpic_all/linux/intro/intro02.shtml
 
 <hr>
 
-### linuxコマンド メモ
+### linuxコマンド
 ```
 cat -n filename    行数付きでファイル閲覧
 cat -b filename    行数付きでファイル閲覧(空白行は省く)
@@ -32,7 +32,7 @@ gzip -r dirname(ディレクトリの中身を丸ごと圧縮)
 gzip -d filename(解凍) もしくは gunzip filename
 ```
 
-* manコマンドのオプション
+* manコマンド
 
 ```
 man -a  全ての説明を表示
@@ -41,7 +41,7 @@ man -k  キーワードを含む説明を表示
 man -w  マニュアルのパスを表示
 ```
 
-* unameコマンドのオプション(Linuxのシステム情報を確認)
+* unameコマンド(Linuxのシステム情報を確認)
 
 ```
 uname -a  全ての情報を表示
@@ -53,7 +53,7 @@ uname -p  CPU情報を表示
 uname -n  hostnameを表示
 ```
 
-* historyコマンドのオプション
+* historyコマンド
 
 ```
 history 件数        件数分のコマンド履歴表示
@@ -67,16 +67,146 @@ history -w filename   bash起動後のコマンド履歴をファイルに上書
 
 ```
 
+* cutコマンド(ファイルから1部を抽出して出力)
+
+```
+cut -b
+cut -c n文字目 hoge.txt    対象ファイルのn文字目を出力(各行のn文字目が対象になる)  -c = --characters
+cut -c n-m hoge.txt       対象ファイルのnからm文字目を出力
+cut -c 5- hoge.txt　　　　 対象ファイルのn文字目から最後まで出力
+cut -d   区切り文字を指定して出力         -d = --delimiter
+cut -d , -f 1 file1       各行を,で区切り、1なら左辺、2なら右辺を表示
+cut -f  出力するフィールド番号を指定      -f = --fields
+```
+
+* expandコマンド(tabをspaceに変換)
+
+```
+expand filename   tab区切りのテキストファイル作成
+expand            標準入力受け付け、タブ区切りの入力に対して各列のデータを揃える
+expand -t n hoge.txt n文字ごとに各スペースの頭を揃える。デフォルトは8。
+expand -i hoge.txt   行頭のタブ文字のみ空白に変換
+```
+
+* unexpandコマンド(tabをspaceに変換)
+
+```
+unexpand filename       tab区切りのテキストファイル作成
+unexpand　-a filename   行頭以外のスペースもタブに変換
+unexpand                標準入力受け付け、タブ区切りの入力に対して各列のデータを揃える
+unexpand -t n hoge.txt  n文字ごとに各スペースの頭を揃える
+```
+
+* lessとmoreの違い
+
+moreはファイルを全て読み込んでから表示するが、lessは必要な箇所を適宜読み込む。  
+lessの方がメモリが少なく高速。
+
+* fmtコマンド
+
+```
+fmt -w 1 filename   1行の文字数を1文字に指定(文字列の場合は末端までを１行として表示)
+fmt -u filename     文字間のスペースが均等でない場合、スペース1つ分に揃えて表示
+```
+
+* headコマンド
+
+```
+head -n test.txt   先頭からn行表示
+head -c n test.txt   先頭からnバイト表示
+```
+
+* tailコマンド
+
+```
+tail -n test.txt     末尾からn行表示
+tail -c n test.txt   末尾からnバイト表示
+tail -F test.txt     テキストの変更を監視し、末尾への追加を即座に反映(ファイルガーローテーションしてもストップしない)
+tail -f test.txt     テキストの変更を監視し、末尾への追加を即座に反映(ファイルガーローテーションするとストップ)
+```
+
+* odコマンド(ファイルを8進数や16進数でダンプ（記録や表示）する)...バイナリファイルの中身を見る
+
+```
+od filename             8進数で表示
+od -x filename          16進数で表示
+od -t x1 filename       16進数かつ1byte単位で表示
+od -t x1 -c filename    元の入力も合わせて表示
+```
+
+* sedコマンド(ファイルの編集を行う。文字列の全置換、行単位の抽出・削除など)
+
+```
+sed s/AAA/aaa/ filename        各行の最初のAAAをaaaに置換
+sed s/AAA/aaa/g filename       ファイル内全てのAAAをaaaに置換
+sed -i s/AAA/aaa/ filename     ファイル内全てのAAAをaaaに置換した後上書き保存
+sed 3d filename                ３行目を削除
+sed 3,4d filename              ３〜４行目を削除
+sed 's/ //g' filename          空白削除
+sed -n 1p filename             1行目を表示
+```
+
+* trコマンド(文字列の変換、消去)
+
+```
+cat file1.txt | tr 'a-z' 'A-z' > file2.txt          file1のアルファベットを全て大文字に変換してファイル2に保存
+cat file1.txt | tr [:lower:] [:upper:] > file2.txt  同上
+cat file1.txt | tr -d :                             ファイル１から : を削除して表示
+```
+
+* sortコマンド(文字列の並び替え)
+
+```
+sort -f filename     大文字小文字を区別せずに並び替え
+sort -n filename     文字列を数値として並び替え
+sort -b filename     先頭の空白を無視して並び替え
+sort -r filename     降順で並び替え
+sort -R filename     ランダムに並び替え
+```
+
+* uniqコマンド(重複行の削除)
+
+```
+uniq filename                  重複行の削除
+uniq -i filename               大文字小文字を区別せずに削除
+sort -f filename | uniq -i     sortすることで重複行として認識させることができる
+sort -f filename | uniq -i -c  各行の重複が何回起きたかカウント表示を追加
+sort filename | uniq -d        重複行の表示
+```
+
+* joinコマンド(ファイルの連結)
+
+```
+join file1 file2       2つのファイルを連結して表示
+join -a 1 file1 file2    ファイル2に対応する項目が無くとも、ファイル1を表示する
+join -a 1 -o auto -e "---"  file1 file2    ファイル2に対応する項目が無い場合、---で表示する
+```
+
+* pasteコマンド(ファイルを行で連結)
+
+```
+paste file1 file2 file3         file1~file3の各行を連結    paste file[1-3]でも可
+paste -d ,: file1 file2 file3   ,と；で区切り連結
+```
+
+* wcコマンド(ファイルのサイズを表示)
+
+```
+wc -c filename   文字数を表示
+wc -l filename   行数を表示
+wc -w filename   単語数を表示
+```
+
 <hr>
 
 ##### ビット数とメモリサイズ
 
-8bit  = 2の8乗  => 256Byte
-16bit = 2の16乗 => 64KB
-32bit = 2の32乗 => 4GB
-64bit = 2の64乗 => 128TB
+8bit  = 2の8乗  => 256Byte  
+16bit = 2の16乗 => 64KB  
+32bit = 2の32乗 => 4GB  
+64bit = 2の64乗 => 128TB  
 
-x86-64 => 64bitの32bit互換対応
+x86-64 => 64bitの32bit互換対応  
 https://blog.framinal.life/entry/2020/04/22/041548　
 
 <hr>
@@ -545,7 +675,7 @@ C言語を用いたシェル
 
 ```
 printnv                   環境変数一覧表示
-env 環境変数名=値 コマンド   環境変数の値を設定し、かつコマンドを実行
+env 環境変数名=値 コマンド   環境変数の値を設定し、かつコマンドを実行　　env user=Bob age=10 ./ファイル名(シェル変数として定義する為、環境変数は変更なし)
 env LANG=C date           環境変数LANGに値を設定してからdateコマンドを実行
 set                       環境変数とシェル変数の一覧を表示
 unset 変数名               環境変数、シェル変数を削除
@@ -554,6 +684,7 @@ export 変数名              シェル変数おw環境変数として設定(別
 
 * 環境変数一覧
 
+```
 HOME ...ホームディレクトリ  
 LANG ...使用言語  
 PATH ...実行コマンドの検索パス  
@@ -563,9 +694,18 @@ LOGNAME　...ログインシェルのユーザ名 su => USER変数が変更さ�
 PS1  ...プロンプトの定義。デフォルトは export PS1="[\u@\h \W]\\$ "  [ユーザー名@ホスト名　カレントディレクトリ]  
 https://atmarkit.itmedia.co.jp/flinux/rensai/linuxtips/002cngprmpt.html  
 
-HISTSIZE ...コマンド履歴の最大値  
-HISTFILE ...コマンド履歴を格納するファイルの場所  
-HISTFILESIZE ...HISTFILEに保存する履歴の数
+HISTSIZE       コマンド履歴の最大値     env | grep HISTSIZE => export HISTSIZE=20  コマンド履歴を確認後、履歴の表示を20件に変更  
+HISTFILE       コマンド履歴を格納するファイルの場所  less /home/ユーザ名/.bash_history でコマンド履歴確認  
+HISTFILESIZE   HISTFILEに保存する履歴の数  
+```
+
+##### 変数の操作
+
+```
+変数名=値                  代入
+print_msg="msg is $msg"  文字列に変数を組み込む場合はダブルクォーテーションで囲む
+echo $変数名  　　　　　　  値の取得
+```
 
 <hr>
 

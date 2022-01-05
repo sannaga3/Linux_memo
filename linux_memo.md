@@ -8,7 +8,7 @@ https://lpi.or.jp/lpic_all/linux/intro/intro02.shtml
 
 <hr>
 
-### linuxコマンド
+### Linuxコマンド
 ```
 cat -n filename    行数付きでファイル閲覧
 cat -b filename    行数付きでファイル閲覧(空白行は省く)
@@ -109,6 +109,14 @@ fmt -w 1 filename   1行の文字数を1文字に指定(文字列の場合は末
 fmt -u filename     文字間のスペースが均等でない場合、スペース1つ分に揃えて表示
 ```
 
+* prコマンド
+
+```
+pr /etc/passwd | less                          パスワードを印刷ページで表示
+pr -h "password" /etc/passwd | less            ヘッダーを設定
+pr -h "password" -l 15 +3:5 /etc/passwd | less      1ページの行数設定(ヘッダーをフッダー含める) 3~5ページ目を表示
+```
+
 * headコマンド
 
 ```
@@ -121,8 +129,8 @@ head -c n test.txt   先頭からnバイト表示
 ```
 tail -n test.txt     末尾からn行表示
 tail -c n test.txt   末尾からnバイト表示
-tail -F test.txt     テキストの変更を監視し、末尾への追加を即座に反映(ファイルガーローテーションしてもストップしない)
-tail -f test.txt     テキストの変更を監視し、末尾への追加を即座に反映(ファイルガーローテーションするとストップ)
+tail -F test.txt     テキストの変更を監視し、末尾への追加を即座に反映(ファイル名が変更されてもストップしない)
+tail -f test.txt     テキストの変更を監視し、末尾への追加を即座に反映(ファイル名が変更されるとストップ)
 ```
 
 * odコマンド(ファイルを8進数や16進数でダンプ（記録や表示）する)...バイナリファイルの中身を見る
@@ -140,10 +148,12 @@ od -t x1 -c filename    元の入力も合わせて表示
 sed s/AAA/aaa/ filename        各行の最初のAAAをaaaに置換
 sed s/AAA/aaa/g filename       ファイル内全てのAAAをaaaに置換
 sed -i s/AAA/aaa/ filename     ファイル内全てのAAAをaaaに置換した後上書き保存
+sed s/^[0-9]*,/・/ filename     ,を区切りとして主キーの数値を・に変換
 sed 3d filename                ３行目を削除
 sed 3,4d filename              ３〜４行目を削除
 sed 's/ //g' filename          空白削除
 sed -n 1p filename             1行目を表示
+sed y/AB/ab/ filename          A => a, B => b にそれぞれ変換される。s/ は文字列を単位 y/ は文字を単位として変換する
 ```
 
 * trコマンド(文字列の変換、消去)
@@ -152,6 +162,7 @@ sed -n 1p filename             1行目を表示
 cat file1.txt | tr 'a-z' 'A-z' > file2.txt          file1のアルファベットを全て大文字に変換してファイル2に保存
 cat file1.txt | tr [:lower:] [:upper:] > file2.txt  同上
 cat file1.txt | tr -d :                             ファイル１から : を削除して表示
+tr -s 'a' < filename                                連続する文字を1つに縮小して表示
 ```
 
 * sortコマンド(文字列の並び替え)
@@ -162,6 +173,7 @@ sort -n filename     文字列を数値として並び替え
 sort -b filename     先頭の空白を無視して並び替え
 sort -r filename     降順で並び替え
 sort -R filename     ランダムに並び替え
+sort -t , -k2 filename  ,で区切って右辺で比較して並び替え
 ```
 
 * uniqコマンド(重複行の削除)
@@ -171,7 +183,9 @@ uniq filename                  重複行の削除
 uniq -i filename               大文字小文字を区別せずに削除
 sort -f filename | uniq -i     sortすることで重複行として認識させることができる
 sort -f filename | uniq -i -c  各行の重複が何回起きたかカウント表示を追加
-sort filename | uniq -d        重複行の表示
+sort -f filename | uniq -i -c  各行の重複が何回起きたかカウント表示を追加
+sort -f filename | uniq -u        重複していない行の表示
+
 ```
 
 * joinコマンド(ファイルの連結)
@@ -196,6 +210,30 @@ wc -c filename   文字数を表示
 wc -l filename   行数を表示
 wc -w filename   単語数を表示
 ```
+
+* splitコマンド(ファイル分割)
+
+```
+split -100 filename bk/filename2.    ファイルを100行単位で、filename.aa filename.ab という形式に分割
+less bk/filename.a*                  分割したファイルを合わせて表示
+split -b 20 filename bk2/filename2   20バイトごとにファイルを分割
+```
+
+* grepコマンド(文字列と正規表現を用いた検索)
+
+```
+grep -v abc             　　abcを含まない行を検索
+grep -i abc filename       大文字小文字を区別せずに検索
+grep -n abc filename       マッチした行数も表示
+
+grep [a-z] filename        アルファベットを含む行を検索
+grep -F [abc] filename     正規表現を無視して検索。 -F がないと [abcd] だけでなく abcd もマッチしてしまう
+fgrep [abc] filename       同上
+
+grep -E 'is(.*?)file' filename   grepでは正規表現に制限がある為、 -Eで機能を拡張する
+egrep 'is(.*?)file' filename     同上
+```
+
 
 <hr>
 
@@ -726,8 +764,104 @@ UNIXと上位互換性のあるフリーな総合ソフトウェアシステム�
 ##### gcc
 
 gcc ... GNUプロジェクトが開発および配布している、さまざまなプログラミング言語のコンパイラ集。
+
 ```
 yum install gcc ...CentOSにgccを導入
 gcc hello.c ... hello.cというC言語のファイルをコンパイルする
 ./a.out ...ファイルの実行
+```
+
+<hr>
+
+### ストリーム
+
+コンピューターの「入力　→　コマンド　→　出力」　の流れをストリームという。
+Linuxにも 「標準入力 →　コマンド(プログラム)　→　標準出力 or 標準エラー出力」 がある.  
+https://www.kenschool.jp/blog/?p=1143
+
+```
+Linuxではストリームを番号で識別している
+
+標準入力 => 0          デフォルト設定  キーボード
+標準出力 => 1                        末端端末
+標準エラー出力 => 2	　　　　　　　　　　　末端端末
+```
+
+<hr>
+
+### リダイレクトとパイプ
+
+入出力はコマンド実行時に切り替えられる。リダイレクトとパイプにより
+コマンド実行後の流れを切り替えることができる。
+https://www.infraeye.com/study/linuxz15.html
+
+```
+リダイレクト(コマンドの入出力を別ファイルに切り替える)
+
+a > b       　　標準出力の出力先変更(上書き)
+a >> b      　　追記(標準出力)
+a 2> b      　　上書き(エラー)
+a 2>> b     　　追記(エラー)
+a >> b 2>&1    追記(標準出力とエラー)
+a &> b         標準出力とエラーを同じファイルに上書き
+a < b          標準入力aにコマンドbを渡す    grep -v abc < filename  filenameからabc以外の行を取得
+grep abc << EOF ~~~~ EOF 　　　　　　　　　　　　　　　　　　　　　　　 標準入力の中から該当行を探す
+./standard_input.txt > output.txt 2> standard_input_errors.txt  標準出力とエラー出力を分けて出力
+```
+
+```
+パイプ(コマンドの出力結果を別のコマンドの標準入力に渡す)
+1つ目のコマンドの標準出力を2つ目のコマンドへ渡す。　標準入力 →　コマンド　→　コマンド　→　標準出力 or 標準エラー出力
+
+cat filename | grep "abc"     　コマンド(cat filename) => コマンド(grep "abc") => 標準出力
+```
+
+##### teeコマンド
+
+リダイレクト先への書き込みと標準出力を同時に行う
+
+```
+ ls -lt | tee data.txt      上書き
+ ls -lt | tee -a data.txt   追記
+ ls -lt | tee -a data.txt | less   追記した後lessで閲覧
+```
+
+##### xargsコマンド
+
+標準入力の内容をパラメータ(引数)としてコマンドに渡す
+https://hydrocul.github.io/wiki/commands/xargs.html
+
+```
+find . -name "*.txt" | xargs rm                テキストファイルを全て削除
+mkdir bk && find . -type f | xargs mv -t bk    作成したバックアップディレクトリにファイルを全て移動  オプション -t => 引数をディレクトリに指定
+```
+
+##### 疑似デバイスファイル　/dev/null
+
+書き込んだデータを全て破棄し、データの読み込みに対して何も返さない。  
+ブラックホールと呼ばれるゴミ捨て用ファイル。  
+リダイレクト先に指定することで不要な出力を抑えたり、空データとして使うこともできる  
+
+https://webbibouroku.com/Blog/Article/dev-null
+
+
+<hr>
+
+### エディタ
+
+```
+vi　　　Linuxの標準エディタ
+vim    vi の改良版　　　Ubuntuでの vi コマンドは vim が起動する
+　　　　 C/C++、Python、Perl、Shellなどの構文サポートが含まれる
+　　　 　圧縮後ファイルの変更が可能(gzipやzip)
+
+vimdiff filename1 filename2   2つのファイルを比較しながら編集可能
+			  ctrl + w で交互のエディタを行き来する
+
+nano  　Ubuntuの標準エディタ。vimより簡単。　
+
+・デフォルトエディタの変更
+whtch editorname でパス検索
+export EDITOR=上記のエディタパス     環境変数のデフォルトエディタを変更
+crontab -e で現在のデフォルトエディタが起動する
 ```

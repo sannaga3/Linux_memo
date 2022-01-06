@@ -61,6 +61,7 @@ history -c         コマンド履歴削除
 history -d 行番号   行番号のコマンド履歴表示
 history -a filename   bash起動後のコマンド履歴をファイルに追記
 history -w filename   bash起動後のコマンド履歴をファイルに上書き
+history -r filename   bash起動後のコマンド履歴を読み込んでからファイルに上書き
 !!                 直近のコマンドを再度実行
 !行番号             行番号のコマンド実行
 ！コマンド名         コマンド名で始まる直近のコマンドを実行  !ls => ls -a
@@ -182,6 +183,7 @@ sort -t , -k2 filename  ,で区切って右辺で比較して並び替え
 uniq filename                  重複行の削除
 uniq -i filename               大文字小文字を区別せずに削除
 sort -f filename | uniq -i     sortすることで重複行として認識させることができる
+sort filename | uniq -d        重複行の表示
 sort -f filename | uniq -i -c  各行の重複が何回起きたかカウント表示を追加
 sort -f filename | uniq -i -c  各行の重複が何回起きたかカウント表示を追加
 sort -f filename | uniq -u        重複していない行の表示
@@ -775,8 +777,8 @@ gcc hello.c ... hello.cというC言語のファイルをコンパイルする
 
 ### ストリーム
 
-コンピューターの「入力　→　コマンド　→　出力」　の流れをストリームという。
-Linuxにも 「標準入力 →　コマンド(プログラム)　→　標準出力 or 標準エラー出力」 がある.  
+コンピューターの「入力　→　コマンド　→　出力」　の流れをストリームという。  
+Linuxにも 「標準入力 →　コマンド(プログラム)　→　標準出力 or 標準エラー出力」 がある。  
 https://www.kenschool.jp/blog/?p=1143
 
 ```
@@ -861,7 +863,10 @@ vimdiff filename1 filename2   2つのファイルを比較しながら編集可�
 nano  　Ubuntuの標準エディタ。vimより簡単。　
 
 ・デフォルトエディタの変更
-whtch editorname でパス検索
+which editorname でパス検索
 export EDITOR=上記のエディタパス     環境変数のデフォルトエディタを変更
 crontab -e で現在のデフォルトエディタが起動する
 ```
+
+<hr>
+

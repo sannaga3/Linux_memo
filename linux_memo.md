@@ -852,15 +852,14 @@ https://webbibouroku.com/Blog/Article/dev-null
 ### エディタ
 
 ```
-vi　　　Linuxの標準エディタ
-vim    vi の改良版　　　Ubuntuでの vi コマンドは vim が起動する
-　　　　 C/C++、Python、Perl、Shellなどの構文サポートが含まれる
-　　　 　圧縮後ファイルの変更が可能(gzipやzip)
+vi     Linuxの標準エディタ
+vim    vi の改良版    Ubuntuでの vi コマンドは vim が起動する
+       C/C++、Python、Perl、Shellなどの構文サポートが含まれる
+       圧縮後ファイルの変更が可能(gzipやzip)
 
-vimdiff filename1 filename2   2つのファイルを比較しながら編集可能
-			  ctrl + w で交互のエディタを行き来する
+vimdiff filename1 filename2   2つのファイルを比較しながら編集可能。ctrl + w で交互のエディタを行き来する
 
-nano  　Ubuntuの標準エディタ。vimより簡単。　
+nano    Ubuntuの標準エディタ。vimより簡単。
 
 ・デフォルトエディタの変更
 which editorname でパス検索

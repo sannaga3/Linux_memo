@@ -314,3 +314,134 @@ virsh dommstate VM 仮想マシンの実行状態確認
 
 <hr>
 
+### ブートプロセスとsystemd
+
+##### ブートプロセス
+
+コンピュータを操作できるようにシステムを順次起動していく流れ  
+
+https://web.mit.edu/rhel-doc/4/RH-DOCS/rhel-rg-ja-4/s1-boot-init-shutdown-process.html  
+
+https://log-bennkyou.com/175/  
+
+https://kimamani89.com/2020/05/01/%E3%80%90linux%E3%80%91%E3%83%96%E3%83%BC%E3%83%88%E3%83%AD%E3%83%BC%E3%83%80%E3%83%BC%E3%81%8B%E3%82%89%E3%82%AB%E3%83%BC%E3%83%8D%E3%83%AB%E3%81%BE%E3%81%A7%E3%81%AE%E8%B5%B7%E5%8B%95%E3%83%97/  
+
+##### BIOS
+
+マザーボードのROMに組み込まれたプログラム。BIOSによってOSが読み込まれ、メモリにロードされてPCは起動する。
+
+マザーボード上のコントローラ（CPU、メモリコントローラ、外部キャッシュメモリ、割り込みコントローラ、ビデオ・コントローラ、リアルタイム・クロック、パラレル/シリアル・ポート、ディスク・コントローラ、バスコントローラ、キーボード コントローラなど）にアクセスし、使用可能な状態を確認する。
+
+https://www.pc-koubou.jp/magazine/1257
+
+
+
+
+##### Linuxのブートプロセス
+
+```
+①電源ON
+
+②BIOS/UEFIが起動   OSを起動するためのプログラムを実行する。
+BIOSの場合...ROM
+・メモリのチェック
+・ハードウェアの設定の読み込み（自己診断と初期化）
+・起動デバイスのチェック
+・起動デバイスのブートローダーの実行
+
+UEFIの違い
+
+・GUIでのセットアップ
+・起動時間と再開時間の短縮
+・1MBのメモリ制約開放 => セキュリティなどを含めたシステムの機能強化が可能
+など
+
+③ブートローダの起動
+OSをメモリにロードする。
+
+④カーネルの起動
+メモリの初期化を行った後、初期RAMディスク(initrd)をメモリに展開し、仮の必要最低限なルートファイルシステムをマウントする。
+
+https://keichi.dev/post/linux-boot/
+https://www.konosumi.net/entry/2020/09/27/223948
+
+⑤カーネルがinitプロセス(最初のプロセス PID：1)を起動する。initはシステム上のすべてのプロセスの親にあたるプロセスであり、/etc/initディレクトリからジョブ設定を読み取る。
+
+ https://docs.oracle.com/cd/E39368_01/admin/ol_about_bootconf.html
+
+ジョブ...initが読み込む一連の命令のこと。命令にはプログラム（バイナリファイルまたはシェルスクリプト）とイベントが含まれる。イベントが実行されることで対応するプログラムが起動する。
+
+イベント...アプリケーションやUSBデバイスなどの接続、起動状態のこと。
+
+ https://mag.osdn.jp/08/02/18/0145226#div-gpt-osdn_mag_rec-article-middle
+
+「/etc/inittab」ファイル
+ initプロセスが最初に参照するファイルで、記述されたプロセスを順に起動する。デフォルトのランレベルの指定、デバイスなどの初期化、initの起動、ブート時の処理、ランレベルごとのrcスクリプトの実行などが記載されている。
+
+ https://linuc.org/study/knowledge/504/
+
+initプロセスの種類3つ
+・SysVinit
+  カーネルを読み込んだ後のプロセス実行部分を指す。initプロセスの開始 => /etc/inittabファイルを読み込み、シェルによるシステムの初期化 => ランレベルを元にrcスクリプトの実行(rcスクリプトは各ランレベルごとに作成され、実行する内容が記述されている)
+
+  https://qiita.com/miyuki_samitani/items/559fb28faa3888bce526
+  https://users.miraclelinux.com/technet/document/linux/training/1_1_3.html
+
+以下2つはSysVinitの改良番
+・Upstart
+
+  SysVinitは直列起動だが、並列起動により起動時間が短縮された。イベントをトリガーとしてジョブを実行し、プロセスを起動させる。
+  pid = 1 の初期プロセスの為のみに存在し、以降の設定は別ファイルに記述し、並列処理で起動する。
+
+  https://qiita.com/miyuki_samitani/items/ff81846f44c083564dbc
+  https://access.redhat.com/documentation/ja-jp/red_hat_enterprise_linux/6/html/migration_planning_guide/ch04s02s03
+
+・systemd
+  現在主流のinitプロセス。Upstartと同じく各プロセスをユニットとして並列起動する。
+  より無駄を減らして高速起動を可能。システム管理の共通化。親子関係にあるプロセスの起動・停止制御など。
+
+  https://tech.pjin.jp/blog/2020/11/11/linux-system-boot-2
+  https://kcfran.com/2021/03/10/linux-systemd-1/
+
+initプロセスのランレベル
+  0     システム停止
+  1     シングルユーザーモード  OSへのログインはrootのみ
+  2,3   マルチユーザーモード    root以外のユーザもログイン可
+  4     なし
+  5     GUIモード
+  6     システム再起動
+```
+
+##### ブートプロセス関連コマンド
+
+システム起動時のカーネルが出力するメッセージを表示
+
+```
+systemctl     systemdで制御しているサービスを管理するコマンド
+systemctl start サービス名       サービス起動
+systemctl stop サービス名        サービス停止
+systemctl restart サービス名     サービス再起動
+systemctl reboot サービス名      サービス再起動
+systemctl poweroff サービス名    シャットダウン
+systemctl getdefault サービス名  デフォルトのブートターゲットを表示
+systemctl setdefault サービス名  デフォルトのブートターゲットを変更
+systemctl isolate サービス名     ブートターゲットを変更
+
+* ブートターゲット = ランレベル
+  0     poweroff.target    システム停止
+  1     rescure.target     シングルユーザーモード  OSへのログインはrootのみ
+  2,3   multi-user.target  マルチユーザーモード    root以外のユーザもログイン可
+  4     なし
+  5     graphical.target   GUIモード
+  6     reboot.target      システム再起動
+
+デフォルトのランレベル変更2つ
+systemctl set-default name.target
+default.targetファイルの作成 => シンボリックリンクを作成
+
+wall    ログイン中のユーザ全員のターミナルにメッセージを表示させる(緊急のサーバメンテナンスなどでシステムを停止する場合など、至急の通知に利用する)
+https://horus531.hatenadiary.org/entry/20110110/1294647041
+
+```
+
+<hr>

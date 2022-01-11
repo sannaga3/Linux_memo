@@ -412,12 +412,11 @@ initプロセスのランレベル
   6     システム再起動
 ```
 
-##### ブートプロセス関連コマンド
+##### systemctlコマンド
 
-システム起動時のカーネルが出力するメッセージを表示
+systemdで制御しているサービスを管理するコマンド
 
 ```
-systemctl     systemdで制御しているサービスを管理するコマンド
 systemctl start サービス名       サービス起動
 systemctl stop サービス名        サービス停止
 systemctl restart サービス名     サービス再起動
@@ -444,4 +443,171 @@ https://horus531.hatenadiary.org/entry/20110110/1294647041
 
 ```
 
+##### demsg関連コマンド
+
+システム起動時のカーネルが出力するメッセージを表示するコマンド
+
+```
+dmesg | less              システム起動時のカーネルが出力するメッセージを表示
+
+runlevel                  ランレベル表示
+
+init ランレベル(数値)  ランレベル変更(初期値は3)     init 1 にするとrootユーザー以外ログイン不可になる。 init 6をするとPCの再起動。
+
+・ランレベル変更方法１
+systemctl list-unit-files --type=service       起動できるサービス一覧を表示。STATEが起動状態を表す。
+https://www.suzu6.net/posts/303-systemctl-list/
+
+systemctl status サービス名                      サービスの状態表示  =>  systemctl start 起動
+
+systemctl get-default                          3の場合 => multi-user target
+
+systemctl set-default rescue.target            defaultの設定を1(rescue.target)に変更
+
+・ランレベル変更方法2
+ls -l /etc/systemd/system/ でもデフォルトのランレベルを確認できる =>  default.target -> /usr/lib/systemd/system/multi-user.target   デフォルトターゲットがマルチユーザーをシンボリックリンクに登録している
+  ↓
+rm /etc/systemd/system/default.target
+  ↓
+ls /usr/lib/systemd/system/multi*   =>  /usr/lib/systemd/system/multi-user.targetの存在を確認
+  ↓
+ln -s /usr/lib/systemd/system/multi-user.target /etc/systemd/system/default.target   <=  /etc/systemd/system/のdefault.targetという名前で /usr/lib/systemd/system/multi-user.gargetのシンボリックリンクを作成(ln -s リンク元 登録名)
+  ↓
+systemctl reboot で再起動してrunlevelを確認
+
+wall 'メッセージ'     ターミナルを複数開き、違うユーザでログインして左記コマンドを打つと、全ターミナルにメッセージが表示される
+```
+
 <hr>
+
+### Linuxの操作
+
+Linuxのインストール設定でできること
+
+```
+OSで使用する言語
+キーボードの言語
+インストール先ハードディスク
+タイムゾーン
+ネットワークホスト名
+ユーザ情報、rootユーザ情報
+インストールするソフトウェアパッケージ
+```
+
+##### Linux操作のコマンド
+
+rootユーザで実行するコマンド。ローカル環境以外で使うことはまずない。
+
+```
+shutdown 時間     now、+1(1分後)、17:18など。shutdownは停止のみで電源はオフにならない
+shutdown ＋20 "System Maintenance Start"         シャットダウンと時刻の通達
+shutdown -h +1   1分後に電源オフ
+shutdown -H +1   1分後にシャットダウンするが電源オフにはしない
+
+shutdown -r now  今すぐシャットダウン後に再起動
+shutdown -c "Schedule changed to tommorrow"     予定時刻のシャットダウンをキャンセル。Ctrl+CでもOK
+shutdown -k now  シャットダウンは行わず、ログイン中のユーザーへメッセージを送る(事前連絡に利用する)
+
+シャットダウンの予定が入ると、その予定をキャンセルしないと新たなシャットダウン予定は予約できない。
+シャットダウンした後は Ctrl + C でシャットダウンをキャンセルできる
+https://eng-entrance.com/linux-command-shutdown
+
+reboot          OS再起動
+poweroff        OSを停止して電源を切る
+halt            OSをシャットダウンできる状態にする(プロセスは停止するが電源は落とさない
+halt -p         OSを停止して電源を切る。poweroffやshutdown -h と同じ
+
+SSH系ファイル
+~/.ssh/known_hosts      初めて接続するサーバーの場合、サーバー情報が保存される
+~/.ssh/authorized_keys  公開鍵認証でクライアントの公開鍵を登録
+~/.ssh/id_rsa           秘密鍵
+~/.ssh/id_rsa.pub       公開鍵
+```
+
+##### dockerでsystemdを使ってみる
+
+centOSでは初期設定でsystemdがオフになっている為、下記URLの Dockerfile for systemd base image のコードをコピーする
+
+https://hub.docker.com/_/centos
+
+```
+su -
+cd
+mkdir ssh-centos
+cd ssh-centos
+vim Docekerfile
+
+----------- Dockerfile 記述 -----------------
+FROM centos:8
+ENV container docker
+RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == \
+systemd-tmpfiles-setup.service ] || rm -f $i; done); \
+rm -f /lib/systemd/system/multi-user.target.wants/*;\
+rm -f /etc/systemd/system/*.wants/*;\
+rm -f /lib/systemd/system/local-fs.target.wants/*; \
+rm -f /lib/systemd/system/sockets.target.wants/*udev*; \
+rm -f /lib/systemd/system/sockets.target.wants/*initctl*; \
+rm -f /lib/systemd/system/basic.target.wants/*;\
+rm -f /lib/systemd/system/anaconda.target.wants/*;
+VOLUME [ "/sys/fs/cgroup" ]
+CMD ["/usr/sbin/init"]
+----------- app.py 変更 -----------------
+
+systemctl start docker
+docker build -t ssh-centos .
+docker images                                      sh-centosのイメージがあることを確認
+docker run -d --privileged ssh-centos /sbin/init   デフォルトでオフ(unprivileged)になっているsystemd(systemctlコマンド)を--privilegeオプションで利用可能にする。
+https://genchan.net/it/virtualization/docker/18388/
+
+docker ps                                          コンテナの起動を確認
+docker exec -it コンテナID bash                      作業コンテナへアクセス
+yum install openssh-server -y                      サーバ機能を提供する openssh-server パッケージをインストール(外部からssh接続が可能になる)
+https://nwengblog.com/rhel-ssh/
+
+systemctl start sshd                               サービスの起動
+systemctl status sshd                              ステータスがactiveであることを確認
+passwd                                             rootユーザで接続するためのパスワードを設定(必要であれば yum install -y passwd)
+docker inspect コンテナID                           コンテナ情報に表示されるIPアドレスを使ってssh接続を行う。"IPAddress": "172.17.0.2",
+
+ssh root@172.17.0.2  => 失敗  ssh: connect to host 172.17.0.2 port 22: Connection refusedのエラーが発生（エラー対処へ）
+ssh root@172.17.0.2  => 成功  passwdで設定したパスワードを入力するとログインできる
+
+パスワードを用いたログイン完了
+
+----------- エラー対処 -----------------
+yum -y install lsof                                lsofパッケージのインストール
+lsof -i -P                                         22番ポートの状態確認。接続側のポートでsystemctl start sshd をしてしまったと推測。
+docker exec -it コンテナID bashでコンテナに入った後systemctl start sshdが通らず、
+別ターミナルを立ち上げて先のコマンドを実行したのが間違い。コンテナ内でsystemctl start sshdを実行できる方法を探すべきだった。
+
+docker run -itd --privileged -p 2222:22 --name ssh-centos --hostname centos8 centos:latest /sbin/init
+上記コマンドでポート指定して起動することで、systemctl start sshd が通った。
+https://genchan.net/it/virtualization/docker/18314/
+
+↓
+次のエラー。コンテナ内でpasswdコマンドが無い。
+ls /bin | grep passwd でコンテナ内の/bin /sbinの登録コマンドにpasswdが無いのを確認。
+yum install -y passwd でpasswdコマンドをインストール。/bin にコマンドが追加された。
+https://stackoverflow.com/questions/60900968/bin-sh-passwd-command-not-found
+
+↓
+次のエラー。ターミナルを新たに起動してVirtualBoxのcentOS8に接続できない。
+kex_exchange_identification: Connection closed by remote host
+接続側のターミナルでsystemctl stop sshdをしてしまっていたのでsystemctl start sshdで接続できた。
+--------------------------------------
+
+
+鍵を用いたログイン方法
+docker exec -it コンテナID bash でコンテナに入った状態からスタート
+
+vi /etc/ssh/sshd_config  (コンテナ側)   => コマンドモードで /Pass として PasswordAuthentication の設定を探して yesから no に変更し、コメントアウトを解除。
+systemctl restart sshd  (コンテナ側)
+ssh root@172.17.0.2  (接続側) で root@172.17.0.2: Permission denied になるのを確認。(パスワードでの接続がnoの設定になっている為)
+パスワード接続ができないのを確かめたら設定を一度元に戻す(公開鍵の登録にパスワードが必要)
+
+ssh-keygen  (接続側)        ~/.ssh/  ディレクトリに公開鍵(id_rsa.pub)と秘密鍵(id_rsa)が作成される
+cat ~/.ssh/id_rsa.pub  (接続側)                             公開鍵の確認
+ssh-copy-id -i ~/.ssh/id_rsa.pub root@172.17.0.2 (接続側)   コンテナ側に公開鍵を登録
+ls ~/.ssh/ (コンテナ側)                                      authorized_keys(コピーした公開鍵)の確認
+ssh root@172.17.0.2    パスワード入力を求められず、公開鍵認証で接続できる
+```

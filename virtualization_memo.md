@@ -556,7 +556,7 @@ CMD ["/usr/sbin/init"]
 systemctl start docker
 docker build -t ssh-centos .
 docker images                                      sh-centosのイメージがあることを確認
-docker run -d --privileged ssh-centos /sbin/init   デフォルトでオフ(unprivileged)になっているsystemd(systemctlコマンド)を--privilegeオプションで利用可能にする。
+docker run -d --privileged ssh-centos /sbin/init (ポートに接続できなかった為、エラー対処欄のコマンドを入力すること)   デフォルトでオフ(unprivileged)になっているsystemd(systemctlコマンド)を--privilegeオプションで利用可能にする。
 https://genchan.net/it/virtualization/docker/18388/
 
 docker ps                                          コンテナの起動を確認
@@ -602,7 +602,7 @@ docker exec -it コンテナID bash でコンテナに入った状態からス�
 
 vi /etc/ssh/sshd_config  (コンテナ側)   => コマンドモードで /Pass として PasswordAuthentication の設定を探して yesから no に変更し、コメントアウトを解除。
 systemctl restart sshd  (コンテナ側)
-ssh root@172.17.0.2  (接続側) で root@172.17.0.2: Permission denied になるのを確認。(パスワードでの接続がnoの設定になっている為)
+ssh root@172.17.0.2  (接続側) で root@172.17.0.2: Permission denied になるのを確認。(パスワードでの接続をnoにした為)
 パスワード接続ができないのを確かめたら設定を一度元に戻す(公開鍵の登録にパスワードが必要)
 
 ssh-keygen  (接続側)        ~/.ssh/  ディレクトリに公開鍵(id_rsa.pub)と秘密鍵(id_rsa)が作成される
@@ -611,3 +611,256 @@ ssh-copy-id -i ~/.ssh/id_rsa.pub root@172.17.0.2 (接続側)   コンテナ側�
 ls ~/.ssh/ (コンテナ側)                                      authorized_keys(コピーした公開鍵)の確認
 ssh root@172.17.0.2    パスワード入力を求められず、公開鍵認証で接続できる
 ```
+
+<hr>
+
+##### プロセスの生成、監視、終了
+
+```
+コマンド &           バックグラウンドプロセスとしてコマンドを実行(バックグラウンドとして起動することでターミナル入力できる状態を保つ)
+jobs                バックグラウンドのジョブを確認できる
+bg                  一時停止中のジョブをバックグラウンドで再開
+fg                  バックグラウンドで実行中のジョブをフォアグラウンドへ移行
+kill %n             n番目のジョブを削除
+kill −19 %n         n番目のジョブを停止
+
+top                 実行中プロセスのCPU使用率などを表示  =>  k => pid ＋ enter でプロセス削除
+ps                  実行中のプロセスを表示
+pstree              親プロセスと子プロセスの派生を階層構造で表示。  yum install psmisc でインストール
+pstree  -p          階層構造の表示にプロセスIDを追加表示
+pstree  プロセスID    対象プロセスより下位の階層構造を表示
+uptime              システム稼働時間を表示。 現在時刻、システム稼働時間、ログイン中のユーザ数、ロードアベレージ(過去１分、5分、15分のシステム負荷)
+
+pgrep               プロセス名を指定してプロセスIDを検索   pgrep sleep =>  sleepコマンドを使っているプロセスを検索 => pkill コマンド名
+
+kill                プロセスにシグナルを送信
+kill -1             再起動
+kill -2             割り込み(ctrl + c)
+kill -9             強制終了
+kill -15            終了
+kill -19            停止
+pkill               プロセス名を指定してシグナル送信
+killall             コマンド名でプロセスにシグナルを送る。  killall vi => viコマンドを使っているプロセスを全て停止
+                    1 再起動   6 中断   9 強制終了   15	終了   17 停止   18 再開
+                    https://uxmilk.jp/52198
+nohup コマンド &     ターミナルを閉じたりログアウトしてもコマンドの処理を継続することができる。処理結果を $(HOME/nohup.out) に出力する
+                    https://atmarkit.itmedia.co.jp/ait/articles/1708/24/news022.html
+
+tmux                ターミナル上に複数のターミナルを立ち上げる    yum install tmux
+tmux ls             立ち上げたセッション一覧表示
+tmux new-session    セッションを新たに立ち上げる
+tumx new-session -s name      nameという名前のセッション立ち上げ    tumx new -s name でもok
+tmux kill-session -s name     セッション名を指定して削除
+tmux attach -t name           セッション名を指定して再接続(リモートなどで同一OSにログインして作業している場合、他の人のターミナルを表示しながら作業することも可能)
+tmux rename-session -t name   セッション名を変更    tmux rename -t s1 s2(s1からs2へセッション名変更)
+
+セッション立ち上げ後のコマンド
+ctrl + d or exit    ウィンドウ、セッションの終了
+ctrl + b -> s       セッション一覧表示
+ctrl + b -> c       新規ウィンドウ作成
+ctrl + b -> &       セッション破棄
+ctrl + b -> "       上下に分割
+ctrl + b -> %       左右に分割
+ctrl + b -> %       左右に分割
+ctrl + b -> 十字キー ウィンドウ内の移動
+ctrl + b -> d       セッションを一時的に中断してメインに戻る
+ctrl + b -> w       セッション一覧から表示するセッションを選択
+ctrl + b -> t       ターミナル一面に現在時刻表示
+```
+
+##### 実際にプロセスを操作してみる
+
+```
+sleep 100
+ctrl + Z       プロセスを停止
+jobs           プロセス一覧を表示(コマンド実行したターミナルのみ)
+sleep 200
+ctrl + Z
+jobs           停止プロセスが増えている
+fg %1          1つ目のプロセスをフォアグラウンドに移行
+ctrl + Z
+bg %2          2つ目のプロセスをバックグラウンドで実行
+jobs           2つ目のプロセスが実行中の表示になる
+kill %1        1つ目のプロセスを終了
+
+mkdir sanmple
+vi sample.sh   中身に1秒ずつ数字を数えるコードを記述
+chmod 755 sample.sh
+./sample.sh &  バックグラウンドでプログラムを実行
+jobs           ./sample.sh & が実行中プロセスとして表示される   出力ファイルを設定しておき、tale -F ファイル名 で実行内容を確認できる
+ctrl + c
+kill -19 %プロセス番号    ./sample.sh & のプロセスを停止       tale -F ファイル名で再度確認すると、値の更新が停止しているのを確認できる
+bg %プロセス番号          プロセスをバックグラウンドで再開
+```
+
+<hr>
+
+### Linuxのデスクトップ環境
+
+##### X Window System
+
+X.Org Foundationが開発している、LinuxをGUIで利用する為のクライアントサーバー型システム。  
+サーバーをXサーバーといい、クライアントをXクライアントクライアントという。Xプロトコルを使い、入出力、Xサーバー、Xクライアントを仲介している。  
+＊ X11 Xプロトコルのバージョン11
+
+https://uhoho.hatenablog.jp/entry/2020/12/24/125056  
+https://qiita.com/kakkie/items/c6ccce13ce0beaefaad1
+
+```
+/etc/X11/xrog.conf  Xサーバー用の設定ファイル。複数のセクションの集まりで構成され、各セクションはSection "<section-name>"行で始まり、EndSection行で終了する。
+
+https://web.mit.edu/rhel-doc/4/RH-DOCS/rhel-rg-ja-4/s1-x-server-configuration.html
+
+/etc/X11/xrog.conf     Xのユーザー固有の設定ファイルを格納するディレクトリ
+/etc/ssh/sshd_config   ssh接続を待ち受けるプロセスの設定ファイル
+
+X11Forwarding yes      X11の転送許可
+X11DisplayOffset 10    Xサーバのディスプレイ番号
+X11UseLocalhost        X11にローカルサーバのみ許可
+~/.xsession-errors     Xのエラーログファイル
+
+startx                 CLIモードでXを起動
+xhost                  Xサーバへの接続を許可
+DISPLAY=<IPアドレス>:<ディスプレイ番号>.<スクリーン番号>     Xサーバのディスプレイ表示先を指定
+xdpyinfo               ディスプレイ情報を表示
+```
+
+##### ディスプレイマネージャ
+
+LinuxをGUI環境で利用可能にする
+
+https://eng-entrance.com/linux-displaymanager  
+https://log-bennkyou.com/561/
+
+ディスプレイマネージャの変更方法
+
+https://blue-red.ddo.jp/~ao/wiki/wiki.cgi?page=Linux%A4%CE%A5%ED%A5%B0%A5%A4%A5%F3%B2%E8%CC%CC%A4%F2%CA%D1%B9%B9%A4%B9%A4%EB
+
+```
+systemctl set-default graphical.target  ディスプレイマネージャの有効化(centOS)
+
+・XDM
+XDMCPプロトコルを使用するXのデフォルトのディスプレイマネージャ。
+設定ファイル  /etc/X11/xdm/xdm-config
+Xresources	ログイン画面のデザインを設定
+Xaccess     ホストからXDMへのアクセス許可設定
+Xsetup_0	ログイン画面表示前に実行されるスクリプト
+Xsession	ログイン後に実行されるスクリプト
+
+・KDM
+KDE標準のディスプレイマネージャ。KDE環境とあわせて利用し、ウィンドウマネージャなども起動できる。
+設定ファイルは /etc/X11/kdm/ にある
+
+・GDM
+GNOME標準のディスプレイマネージャ。CentOS7のデフォルト。
+設定ファイルは /etc/X11/gdm/  にある
+
+・Xfce
+豪華な見た目と簡単な使用感を保ちながら、軽量・高速なデスクトップ環境を提供する。
+
+・LightDM
+Ubuntu標準のディスプレイマネージャ。デスクトップ環境に依存しない。Greeterで設定を行う。
+設定ファイルは /etc/lightdm/ にある
+
+VNC(Virtual Network Computing)    ネットワークを介して別のホストを遠隔操作するソフトウェア
+RDP(Remote Desktop Protocol)      デスクトップコンピューターを遠隔操作する技術
+
+クラウドコンピューティング            クラウドに保存されているファイルやアプリケーション、特にクラウドサーバーにアクセスする
+リモートデスクトップ                 物理的なデスクトップコンピューターにアクセスするため、そのデスクトップに保存されたファイルとアプリケーションが利用できる
+https://www.cloudflare.com/ja-jp/learning/access-management/what-is-the-remote-desktop-protocol/
+```
+
+<hr>
+
+##### X11のインストール
+
+以下2つをインストールして使うが、mac非対応
+xming fonts、xming setup
+
+代わりにXQuartzでやってみる
+
+https://www.xquartz.org/ からdmgファイルをダウンロードしてインストール  
+https://itcweb.cc.affrc.go.jp/affrit/documents/guide/x-window/x-win-mac  
+
+```
+su -
+yum install xterm* xorg* xauth  (macで行う場合？は不要)
+
+vi /etc/ssh/sshd_config        X11が使えるようにsshdの接続設定を変更
+
+--------- sshd_config -----------
+X11Forwarding yes           追記
+X11DisplayOffset 10         追記
+--------------------------------
+
+sshd -t         テストモード。設定ファイルや鍵の正当性をチェック
+https://nxmnpg.lemoda.net/ja/8/sshd
+
+systemctl restart sshd.service      ssh接続の変更を反映
+
+ip a                                ifconfigに変わって推奨されるコマンド。(ifconfigはyum install net-toolsでインストール)
+https://qiita.com/_dakc_/items/4eefa443306860bdcfde
+
+startxで xauth:  file /root/.serverauth.1717 does not exist のエラーを発見
+
+yum remove xterm* xorg* xauth       下のコマンドで干渉するといけないので削除しておく
+
+yum groupinstall "X Window system"   コマンドが古く対応していないと返ってきた
+https://eng-entrance.com/linux-gui-x11
+↓
+yum -y group install "Server with GUI"   もっと多くのパッケージをインストール必要があった「yum install xterm* xorg* xauth」では足りなすぎた
+*依存関係やパッケージ見つからないエラーが多数表示された為、指示通り依存関係の更新を行う --allowerasing オプションで実行した。
+
+macのターミナルでxtermを起動
+startx                       VirtualBoxの画面でGUIのインターフェスに変わっている
+
+
+・以下は全てメモ
+--------------------上手くいかなかったやり方--------------------
+https://hana-shin.hatenablog.com/entry/2021/12/23/194837#3-%E3%82%B5%E3%83%BC%E3%83%90%E3%81%AE%E8%A8%AD%E5%AE%9A%E5%A4%89%E6%9B%B4
+
+vi /etc/ssh/sshd_config で追記   Port 22222
+semanage port -a -t ssh_port_t -p tcp 22222
+* semanageコマンドはSELinuxの管理で使用する。
+* SELinux(Security-Enhanced Linux) Linux のセキュリティをより強固なものにするため、米国国家安全保障局(NSA)によって開発され、Fedora, Red Hat Enterprise Linux, CentOS では標準で有効化されている。
+https://www.tohoho-web.com/ex/selinux.html
+
+lsof -i4:22222 -a -P              sshdのポート番号を確認
+firewall-cmd --permanent --add-port=22222/tcp   ポートの開放
+firewall-cmd --reload             パーマネントルールをランタイムルールに展開。
+firewall-cmd --list-ports         22222番ポートへのアクセス許可の確認
+firewall-cmd --remove-port=22222/tcp  ポートを閉める
+
+firewall-cmdについて  ポートの開閉など
+https://qiita.com/hana_shin/items/bd9ba363ba06882e1fab
+------------------------------------------------------------
+
+
+--------- _(centOSでアンダーバーが打てなくなった場合) ------------
+macを再起動したらcentOSのキーボード入力が変更されていた
+https://detail.chiebukuro.yahoo.co.jp/qa/question_detail/q11247807971
+
+sudo localectl status          キーボードの入力がJpになっているのが原因
+sudo localectl set-keymap us   USキーにすればOK
+------------------------------------------------------------
+
+
+---------------- sshd_configの記述ミス -----------------------
+Bad configuration option: permitrootlogin のエラー
+
+下記の記述場所間違い     sshd_configだけでなくssh_configにも記述していた。間違えやすいので注意が必要。
+X11Forwarding yes
+X11DisplayOffset 10
+
+https://teratail.com/questions/187130
+------------------------------------------------------------
+
+・その他コマンド
+ping IPアドレス                      IPアドレス宛にパケットを送信し、受信できるか確認する
+yum list                            インストール済みのパッケージを表示
+yum list >> /home/ユーザ名/log/20220112_yum_list_before.log   パッケージインストール前にyum listを控えておくと依存関係でエラーが出た時に遡って調べることができる
+nmcli d                             ネットワークインターフェースの確認
+ls /etc/sysconfig/network-scripts/  confファイルの確認 => ifcfg-enp0s3
+```
+
+

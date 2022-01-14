@@ -148,6 +148,8 @@ docker pull                          Docker Hubからイメージの取得
 	                             -f でDockerfile以外を指定
        docker system prune           コンテナを全削除
        docker image prune            イメージを全削除
+       cat /etc/os-release           ホストのOS情報を表示(コンテナ内)
+
 ```
 
 ##### Dockerfile
@@ -302,14 +304,15 @@ libvirt        libvirtd デーモンを提供することで、仮想化機構�
 yum install virt-manager
 yum install libvirt virt-install
 
-virth list         ドメイン一覧表示
+virth list         ドメインID、ドメイン名、実行状態の一覧表示
 virsh start VM     仮想マシン起動
 virsh console VM   virshコマンドでVMに接続
 virsh shutdown VM  仮想マシンの停止
 virsh destroy VM   仮想マシンの削除
-virsh dominfo VM   仮想マシンのドメインに関する情報表示
+virsh dominfo VM   仮想マシンのドメイン、CPU,
+メモリなどに関する情報表示
 virsh domid VM     仮想マシンのドメインID表示
-virsh dommstate VM 仮想マシンの実行状態確認
+virsh domstate VM  仮想マシンの実行状態確認(シャットオフ、実行中など)
 ```
 
 <hr>
@@ -812,7 +815,7 @@ yum -y group install "Server with GUI"   もっと多くのパッケージをイ
 *依存関係やパッケージ見つからないエラーが多数表示された為、指示通り依存関係の更新を行う --allowerasing オプションで実行した。
 
 macのターミナルでxtermを起動
-startx                       VirtualBoxの画面でGUIのインターフェスに変わっている
+startx                       VirtualBoxで起動したcentOSの画面がGUIに変わっている
 
 
 ・以下は全てメモ
@@ -861,6 +864,29 @@ yum list                            インストール済みのパッケージ�
 yum list >> /home/ユーザ名/log/20220112_yum_list_before.log   パッケージインストール前にyum listを控えておくと依存関係でエラーが出た時に遡って調べることができる
 nmcli d                             ネットワークインターフェースの確認
 ls /etc/sysconfig/network-scripts/  confファイルの確認 => ifcfg-enp0s3
+xwininfo                            xtermのディスプレイのウィンドウ位置やサイズの表示
+xdpyinfo                            起動しているウィンドウすべての情報を表示
+edho $DISPLAY                       xtermで行うと接続しているディスプレイ情報を表示  /private/tmp/com.apple.launchd.CAoVzywGh0/org.xquartz:0
 ```
 
+##### パッケージグループのインストール
 
+複数パッケージを一括インストールする場合はパッケージグループでのインストールが便利。  
+＊OSのバージョンなどで dnf(新) yum(旧) か違ってくる
+
+https://monologu.com/confirm-packagegroup/
+
+```
+yum group list                       グループ名一覧表示
+yum group info グループ名              グループのパッケージ一覧表示
+dnf group install グループ名           グループのパッケージを一括インストール
+```
+
+centOSをGUIモードでログインする
+
+```
+yum group install Workstation
+systemctl set-default graphical.target     ランレベル５に変更(テキストログインのマルチユーザモード)
+reboot
+systemctl set-default multi-user.target    ランレベル３に変更(グラフィカルログインのマルチユーザモード)
+```

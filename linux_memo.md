@@ -744,7 +744,7 @@ HISTFILESIZE   HISTFILEに保存する履歴の数
 ```
 変数名=値                  代入
 print_msg="msg is $msg"  文字列に変数を組み込む場合はダブルクォーテーションで囲む
-echo $変数名  　　　　　　  値の取得
+echo $変数名              値の取得
 ```
 
 <hr>
@@ -777,8 +777,8 @@ gcc hello.c ... hello.cというC言語のファイルをコンパイルする
 
 ### ストリーム
 
-コンピューターの「入力　→　コマンド　→　出力」　の流れをストリームという。  
-Linuxにも 「標準入力 →　コマンド(プログラム)　→　標準出力 or 標準エラー出力」 がある。  
+コンピューターの「入力 → コマンド → 出力」 の流れをストリームという。  
+Linuxにも 「標準入力 → コマンド(プログラム) → 標準出力 or 標準エラー出力」 がある。  
 https://www.kenschool.jp/blog/?p=1143
 
 ```
@@ -786,7 +786,7 @@ Linuxではストリームを番号で識別している
 
 標準入力 => 0          デフォルト設定  キーボード
 標準出力 => 1                        末端端末
-標準エラー出力 => 2	　　　　　　　　　　　末端端末
+標準エラー出力 => 2	                  末端端末
 ```
 
 <hr>
@@ -800,22 +800,22 @@ https://www.infraeye.com/study/linuxz15.html
 ```
 リダイレクト(コマンドの入出力を別ファイルに切り替える)
 
-a > b       　　標準出力の出力先変更(上書き)
-a >> b      　　追記(標準出力)
-a 2> b      　　上書き(エラー)
-a 2>> b     　　追記(エラー)
+a > b          標準出力の出力先変更(上書き)
+a >> b         追記(標準出力)
+a 2> b         上書き(エラー)
+a 2>> b        追記(エラー)
 a >> b 2>&1    追記(標準出力とエラー)
 a &> b         標準出力とエラーを同じファイルに上書き
 a < b          標準入力aにコマンドbを渡す    grep -v abc < filename  filenameからabc以外の行を取得
-grep abc << EOF ~~~~ EOF 　　　　　　　　　　　　　　　　　　　　　　　 標準入力の中から該当行を探す
+grep abc << EOF ~~~~ EOF                                        標準入力の中から該当行を探す
 ./standard_input.txt > output.txt 2> standard_input_errors.txt  標準出力とエラー出力を分けて出力
 ```
 
 ```
 パイプ(コマンドの出力結果を別のコマンドの標準入力に渡す)
-1つ目のコマンドの標準出力を2つ目のコマンドへ渡す。　標準入力 →　コマンド　→　コマンド　→　標準出力 or 標準エラー出力
+1つ目のコマンドの標準出力を2つ目のコマンドへ渡す。  標準入力 →  コマンド  →  コマンド  →  標準出力 or 標準エラー出力
 
-cat filename | grep "abc"     　コマンド(cat filename) => コマンド(grep "abc") => 標準出力
+cat filename | grep "abc"      コマンド(cat filename) => コマンド(grep "abc") => 標準出力
 ```
 
 ##### teeコマンド
@@ -838,7 +838,7 @@ find . -name "*.txt" | xargs rm                テキストファイルを全て
 mkdir bk && find . -type f | xargs mv -t bk    作成したバックアップディレクトリにファイルを全て移動  オプション -t => 引数をディレクトリに指定
 ```
 
-##### 疑似デバイスファイル　/dev/null
+##### 疑似デバイスファイル /dev/null
 
 書き込んだデータを全て破棄し、データの読み込みに対して何も返さない。  
 ブラックホールと呼ばれるゴミ捨て用ファイル。  
@@ -869,3 +869,187 @@ crontab -e で現在のデフォルトエディタが起動する
 
 <hr>
 
+### パッケージ管理
+
+##### rpmとyum
+
+どちらもRedHat系のパッケージ管理方式。rpmはパッケージ個々を管理し、yumはrpmを管理する。rpmは自動で依存関係を考慮してインストールしないが、yumは依存関係を解決してインストールできる
+https://eng-entrance.com/linux-package-rpm-yum-def
+
+##### rpm
+
+RedHat社が開発したパッケージ管理方式。rpmコマンドでパッケージを管理する
+
+```
+rpm -i      パッケージのインストール(依存関係があるとエラーになる)   --install
+rpm -U      パッケージのアップグレード  --upgrade
+rpm -F      パッケージのアップグレード  --freshen
+上記と併用するオプション
+-h          インストール進み具合の表示  --hash
+➖v         詳細情報表示
+--nodeps    依存関係を無視してインストール
+--prefix    インストールするディレクトリを指定
+--relocate  インストール済みのパッケージのディレクトリ変更(再インストール)
+-e          パッケージを削除          --erase
+
+rpm -q      インストール済みパッケージの検索  --query
+rpm -V      パッケージの検査
+上記と併用するオプション
+-a          全パッケージを表示                   --all
+-l          パッケージに含まれるファイル一覧を表示  --list
+-i          パッケージの詳細表示                 --info
+-f          ファイル名を指定し、どのパッケージにインストールされているかを表示    --packeage
+-p          パッケージ名を元に、含まれる全てのファイルを表示
+--changelog パッケージの更新履歴を表示
+-R          依存ファイルの表示
+
+rpm --nomd5 md5sumチェックによるファイル改竄の検査をしない
+＊md5sumコマンド   ファイルをダウンロード（コピー）した後に、破損や改変がないことを確認する。ファイルのダウンロード元やメッセージの送信元がハッシュ値を公開している必要がある。
+https://atmarkit.itmedia.co.jp/ait/articles/1711/17/news013.html
+
+rpm2cpio パッケージ名 | cpio --list   パッケージ内のファイルリスト表示
+rpm2cpio パッケージ名 | cpio -ivd ファイルパス   指定したファイルの取得
+http://wordpress.honobono-life.info/lin-base/%E3%82%A4%E3%83%B3%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AB%E3%81%9B%E3%81%9A%E3%81%ABrpm%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E5%86%85%E3%81%8B%E3%82%89%E7%89%B9%E5%AE%9A%E3%81%AE%E3%83%95/
+```
+
+##### yum
+
+RedHat系で使われるrpmパッケージ管理ツール。  
+yumのパッケージはそれぞれがレポジトリとしてインターネット上に保存されている。  
+https://eng-entrance.com/linux-package-yum
+
+```
+yum check-update           アップデート可能なパッケージを表示
+yum update                 すべてのパッケージをアップデート
+yum update パッケージ名      パッケージのアップデート
+yum install パッケージ名     パッケージのインストール
+yum remove パッケージ名      パッケージのアンインストール
+yum info パッケージ名        パッケージ情報の表示
+yum list                   パッケージ一覧の表示
+yum search パッケージ名      パッケージを検索
+yum grouplist              パッケージグループ一覧を表示
+yum groupinstall           パッケージグループのインストール
+yum provides ファイル名      ファイルの含まれるパッケージを検索
+
+/etc/yum.conf              yumの設定ファイル
+/etc/yum.repos.d/          yumコマンドで使うレポジトリ情報が書かれている。このディレクトリの情報を元にパッケージがインストールされる(パッケージが保存されているレポジトリの情報が書かれている)
+yumdownloader              rpmパッケージをインストールせずにダウンロードのみ行う
+yumdownloader --source     rpmパッケージではなくソースファイルをダウンロードする
+```
+
+・yumコマンドの情報
+
+```
+ls /etc/yum.repos.d/                              yumコマンドで使う情報が格納されたディレクトリ
+ls /etc/yum.repos.d/CentOS-Linux-AppStream.repo   各yumコマンドのインストール先情報が記述されているファイル
+cat /etc/yum.repos.d/CentOS-Linux-AppStream.repo  下記のURL情報でバージョンとアーキテクチャの部分を書き換える
+mirrorlist=http://mirrorlist.centos.org/?release=$releasever&arch=$basearch&repo=AppStream&infra=$infra
+↓
+http://mirrorlist.centos.org/?release=8&arch=x86_64&repo=AppStream&infra=    ブラウザにコピペするとyumコマンドのソース元にアクセスできる
+```
+
+##### zsh
+
+・zshの利点
+メニュー補完、コンテキスト補完、多段階層補完など
+https://www.mimir.yokohama/serials/linux-one/0007-zsh.html
+
+```
+rpm -ivh http://mirror.centos.org/centos/8/BaseOS/x86_64/os/Packages/zsh-5.5.1-6.el8_1.2.x86_64.rpm    CentOS8用のzshシェルのパッケージを詳細と進捗を表示しながらインストール
+
+cat /etc/shells           shell一覧にzshが追加されているのを確認
+zsh --version             バージョン確認
+
+rpm -V zsh                パッケージに問題がないか検査
+echo $?                   前のコマンドの実行結果を表示。0 => true  1 => false  127 => コマンドが見つからない
+https://qiita.com/satton6987/items/6031785e23d8fdbb1a5a
+
+rpm -qf /usr/bin/zsh       指定したファイルを含むパッケージを表示  => zsh-5.5.1-6.el8_1.2.x86_64
+rpm -qa                    インストール済みファイルすべて表示
+rpm -ql openssh            openssh含まれるファイル一覧表示
+rpm -qi openssh            パッケージの詳細情報表示
+rpm -e zsh                 パッケージの削除
+```
+
+・httpd
+
+Apacheをインストールして使えるようにする  
+https://qiita.com/yasushi-jp/items/c5feeaff2024d3c069db  
+https://densan-hoshigumi.com/server/apache/install-rhel8-centos8  
+
+```
+rpm -ivh http://repo.okay.com.mx/centos/8/x86_64/release/httpd-2.4.37-12.el8.x86_64.rpm
+↓  依存関係の警告
+yum install httpd
+```
+
+##### dpkg
+
+debian系のパッケージ管理コマンド。依存関係を解決しない為、使うことは少ない。
+
+```
+dpkg -i     インストール                         --install
+dpkg -r     設定ファイルを残してパッケージを削除     --remove
+dpkg -p     設定ファイルも含めてパッケージ削除       --purge
+dpkg -l     一覧表示                            --list
+dpkg -i     アーカイブ表示                       --info
+dpkg -c     パッケージに含まれるファイル一覧表示     --contents
+dpkg -C     パッケージのインストール状態表示        --audit
+dpkg -s     詳細表示                            --status
+dpkg -S     文字列に一致するパッケージ表示          --search
+```
+
+##### apt
+
+dpkgを拡張したパッケージ管理コマンド。
+依存関係を解決し、パッケージ管理サイト(リポジトリ)から最新のパッケージをインストールする。
+
+「apt-get」ではなく「apt」コマンドが推奨されている
+https://linuxfan.info/package-management-ubuntu  
+https://qiita.com/karaage0703/items/f01db1cf49b151022b7c
+
+/etc/apt/source.list  パッケージのダウンロード元の設定ファイル
+
+```
+apt install パッケージ名      パッケージのインストール
+apt install -d 設定ファイル   パッケージのダウンロードのみ
+apt update                  リポジトリからパッケージの名前・バージョン・依存関係を取得し、アップデート可能なパッケージリストを更新して表示
+apt upgrade                 アップグレード可能なパッケージを更新する。依存関係などで削除が必要なものは更新されない
+apt full-upgrade            他のパッケージで削除が必要なものを含めてパッケージを更新する
+sudo apt remove パッケージ名  パッケージの削除
+sudo apt autoremove         依存関係で不要になったパッケージを全て削除
+apt purge パッケージ名        パッケージ削除時に残る場合のある設定ファイルも含めて削除
+apt search 文字列 | less     単語を含むパッケージを検索する
+apt-cache search ruby | grep ^ruby | sort | less   1行につき１パッケージで検索
+apt clean                   ダウンロードされたdebパッケージ(/var/cache/apt以下にキャッシュ)を削除
+apt list                    インストールしていないものも含むパッケージ一覧
+apt list --installed        インストール済みのパッケージ一覧
+dpkg -L パッケージ名          パッケージ内のファイル一覧
+apt show パッケージ名         パッケージ詳細
+apt depends パッケージ名      依存、提案、推奨、競合関係のパッケージを表示
+dlocate ファイル名            ファイルからパッケージ名の検索
+apt changelog パッケージ名     パッケージの更新履歴を表示
+apt-file update パッケージ名   パッケージ情報の更新
+apt-file search ファイル名     ファイル名を含むパッケージを検索   apt install apt-fileが必要
+```
+
+### ubuntuでaptコマンドを使ってみる
+
+```
+docker run -it ubuntu
+cat /etc/os-release         コンテナのOS情報確認
+apt update                  パッケージリストの更新で下記エラー発生
+E: Release file for http://security.ubuntu.com/ubuntu/dists/focal-security/InRelease is not valid yet (invalid for another 1d 5h 54min 44s). Updates for this repository will not be applied.
+↓
+centOS側の時刻がズレていた
+timedatectl set-timezone Asia/Tokyo
+timedatectl set-time "2022-01-14 21:39:00"
+
+再度 apt update
+apt install less
+less /etc/apt/sources.list   パッケージのインストール先記述ファイル
+apt show less                lessのパッケージ情報表示
+apt install apt-file
+apt-file update              先にリスト更新が必要
+apt-file apt-file search etc/security   対象ディレクトリのファイルを検索
+```

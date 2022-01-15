@@ -9,6 +9,7 @@ https://lpi.or.jp/lpic_all/linux/intro/intro02.shtml
 <hr>
 
 ### Linuxコマンド
+
 ```
 cat -n filename    行数付きでファイル閲覧
 cat -b filename    行数付きでファイル閲覧(空白行は省く)
@@ -869,7 +870,7 @@ crontab -e で現在のデフォルトエディタが起動する
 
 <hr>
 
-### パッケージ管理
+### パッケージ管理の管理方式
 
 ##### rpmとyum
 

@@ -384,3 +384,320 @@ ifdown  ネットワークインターフェス名       ネットワークイ�
 
 route                               ルーティングの追加・削除を設定するコマンド。CentOS7以降非推奨、ipコマンドを使う。
 ```
+
+##### ping コマンド
+
+宛先までIPパケットが到達するか確認するコマンド  
+https://eng-entrance.com/linux-command-ping
+
+```
+ping                                            Ctrl+Cが押されるまで接続を続ける
+
+ping -i 時間(1/1000秒) IPアドレス or ホスト名       指定時間接続できるかチェック
+ping -c 回数 IPアドレス or ホスト名                 回数分正常に接続できるかチェック
+ping -s パケットサイズ 接続先IPアドレスまたはホスト名   パケットサイズを指定して送受信できるかチェック(実際には指定したパケットサイズ＋8バイトが送信される)
+ping6                                            IPv6で
+```
+
+##### traceroute コマンド
+
+あるホストから別のホストまでのネットワーク経路をリスト表示するコマンド  
+https://atmarkit.itmedia.co.jp/ait/articles/0108/30/news003.html
+
+```
+traceroute       pingで相手ホストから正常な応答がなかった場合などに、ホスト自身や経路上のルーターのルーティング設定が正しいかどうかを確認する。
+                 各ルーターからのレスポンス時間などの統計値も表示される。
+```
+
+##### netcat
+
+CPもしくはUDP接続などを利用して、コマンドラインからデータを送受信するためのツール。ncコマンドを用いる。
+https://www.intellilink.co.jp/column/security/2015/070100.aspx
+
+```
+nc 接続先ホスト ポート番号 で記述
+nc -l 9999                    リッスンモード。9999(TCP)のポートを開く(サーバー側として起動)  *疎通に成功するとサーバ側のプロセスが終了する
+nc -ul 9999                   リッスンモード。9999(UDP)のポートを開く(サーバー側として起動)  *疎通に成功するとサーバ側のプロセスが終了する
+https://orebibou.com/ja/home/201511/20151117_001/
+
+nc -kvl ポート番号                TCPのポートを開く(サーバー側として起動) *サーバー側のプロセスを終了するまで起動し続ける
+nc -e /bin/cat -uvl ポート番号    UDPのポートを開く(サーバー側として起動) *サーバー側のプロセスを終了するまで起動し続ける
+
+nc ホスト名 ポート番号             指定したホスト名のポート番号へ接続(クライアント側)
+```
+
+##### netstat コマンド
+
+TCP/IP関連のトラブルシューティングを行う場合に、ほぼ必ず使うコマンド。通信中のTCPコネクション（TCP接続）の状態を表示する。  
+https://atmarkit.itmedia.co.jp/ait/articles/0207/20/news003.html
+
+```
+netstat          アクティブなTCPコネクションを一覧表示
+
+------------------------------------------------------------
+[root@localhost ~]# netstat
+Active Internet connections (w/o servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State
+tcp        0      0 localhost.localdoma:ssh _gateway:62339          ESTABLISHED
+tcp        0      0 localhost.localdoma:ssh _gateway:60126          ESTABLISHED
+tcp        0      0 localhost.localdoma:ssh _gateway:51759          ESTABLISHED
+udp        0      0 localhost.locald:bootpc _gateway:bootps         ESTABLISHED
+Active UNIX domain sockets (w/o servers)
+Proto RefCnt Flags       Type       State         I-Node   Path
+unix  26     [ ]         DGRAM                    11790    /run/systemd/journal/dev-log
+unix  2      [ ]         DGRAM                    24154    /run/chrony/chronyd.sock
+unix  2      [ ]         DGRAM                    32866    /run/user/1000/systemd/notify
+unix  3      [ ]         DGRAM                    11749    /run/systemd/notify
+unix  2      [ ]         DGRAM                    11751    /run/systemd/cgroups-agent
+unix  7      [ ]         DGRAM                    11765    /run/systemd/journal/socket
+unix  3      [ ]         STREAM     CONNECTED     23227    /run/systemd/journal/stdout
+-----------------------------------------------------------
+
+netstat -aA inet  ホスト名とプロトコル名は数値で表示し、IPv4に限定する
+https://atmarkit.itmedia.co.jp/fnetwork/netcom/netstat/netstat.html
+https://network-beginners-handbook.com/netstat/
+
+-----------------------------------------------------------
+[root@localhost ~]# netstat -aA inet
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State
+tcp        0      0 0.0.0.0:sunrpc          0.0.0.0:*               LISTEN
+tcp        0      0 localhost.locald:domain 0.0.0.0:*               LISTEN
+tcp        0      0 0.0.0.0:ssh             0.0.0.0:*               LISTEN
+tcp        0      0 localhost:ipp           0.0.0.0:*               LISTEN
+tcp        0      0 localhost.localdoma:ssh _gateway:62339          ESTABLISHED
+tcp        0      0 localhost.localdoma:ssh _gateway:60126          ESTABLISHED
+tcp        0      0 localhost.localdoma:ssh _gateway:51759          ESTABLISHED
+udp        0      0 localhost.locald:domain 0.0.0.0:*
+udp        0      0 0.0.0.0:bootps          0.0.0.0:*
+udp        0      0 localhost.locald:bootpc _gateway:bootps         ESTABLISHED
+udp        0      0 0.0.0.0:sunrpc          0.0.0.0:*
+udp        0      0 0.0.0.0:ntp             0.0.0.0:*
+udp        0      0 0.0.0.0:mdns            0.0.0.0:*
+udp        0      0 localhost:323           0.0.0.0:*
+udp        0      0 0.0.0.0:50738           0.0.0.0:*
+-----------------------------------------------------------
+```
+
+##### ss コマンド
+
+netstatの後継コマンド。  
+https://milestone-of-se.nesuke.com/sv-basic/linux-basic/ss-netstat/
+
+```
+ss -nltu         ポートの開放状態確認
+
+オプション
+-n : ポート番号をサービス名変換しない
+-t : TCP を表示
+-u : UDP を表示
+
+ss -nltup        ポートを開放しているプロセスも表示する
+
+・STATEについて
+LISTEN  =>  TCPの待ち受けポート
+UNCONN  =>  UDPの待ち受けポート
+ESTAB   =>  TCPコネクションが確立した状態
+
+・Recv-QとSend-Qについて
+State = ESTAB の場合 => Recv-Q はプロセスに引き渡されていないパケットの総byte数を表す
+                       Send-Q は通信先から TCP ack が返ってきていないパケットの総byte数を表す
+State = LISTEN の場合 => Recv-Q は現在の TCP コネクション未確立の数
+                        Send-Q は受け入れ可能な最大TCPコネクション未確立通信の数
+```
+
+・コマンドを使ってみる
+
+```
+hostname   hostnameの確認
+
+------------------------------------------------------------------
+[root@localhost ~]# hostname
+localhost.localdomain
+------------------------------------------------------------------
+
+cat /etc/hosts      hostnameとIPアドレスの確認。ホスト名を指定してサービスに接続できる。
+
+------------------------------------------------------------------
+[root@localhost ~]# cat /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+* ::1 はIPv6のループバックアドレスのこと。先頭の連続した０は ::1 と省略可能、0000:0000:0000:0000:0000:0000:0000:0001を意味する。
+https://ja.stackoverflow.com/questions/22927/1-%E3%81%8C-%E3%83%AD%E3%83%BC%E3%82%AB%E3%83%AB%E3%83%9B%E3%82%B9%E3%83%88%E3%81%AEip%E3%81%A8%E3%81%AA%E3%82%8B%E3%81%AE%E3%81%AF%E3%81%AA%E3%81%9C
+------------------------------------------------------------------
+
+hostnamectl set-hostname "new_hostname"      ホスト名の変更
+
+systemctl start docker                       dockerを起動する
+docker run -it -d centos                     バックグラウンドでCentOSを起動しておく
+docker ps                                    CentOSの起動を確認
+docker inspect コンテナID                     コンテナに関する全ての情報を取得し、IPアドレスを確認。"IPAddress": "172.17.0.2",
+ping 172.17.0.2                              指定アドレスにパケット通信を行い、正確に到達するか確認
+
+------------------------------------------------------------------
+[root@localhost ~]# ping 172.17.0.2
+PING 172.17.0.2 (172.17.0.2) 56(84) bytes of data.
+64 bytes from 172.17.0.2: icmp_seq=1 ttl=64 time=0.053 ms
+64 bytes from 172.17.0.2: icmp_seq=2 ttl=64 time=0.066 ms
+64 bytes from 172.17.0.2: icmp_seq=3 ttl=64 time=0.105 ms
+64 bytes from 172.17.0.2: icmp_seq=4 ttl=64 time=0.080 ms
+^C
+--- 172.17.0.2 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3069ms
+rtt min/avg/max/mdev = 0.053/0.076/0.105/0.019 ms
+------------------------------------------------------------------
+
+vi /etc/hosts                     複数のhost名とIPアドレスを追記(IPアドレスでなく、ホスト名でサービスを指定できるようにする)
+
+---------------------- /etc/hosts --------------------------------
+[root@localhost ~]# cat /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+172.17.0.2  my_docker my_docker.com sample.com            ＊ 追記
+------------------------------------------------------------------
+
+ping my_docker                    ホスト名でサービスを指定(my_docker.com sample.comで指定してもOK)
+
+systemctl start NetworkManager    NetworkManagerを起動
+nmcli general hostname            ホスト名の確認
+nmcli general status              NetworkManagerの状態確認
+
+------------------------------------------------------------------
+[root@localhost ~]# nmcli general status
+STATE     CONNECTIVITY  WIFI-HW  WIFI  WWAN-HW  WWAN
+接続済み      完全          有効     有効  有効     有効
+
+* CONNECTIVITY 完全 =>  インターネットに接続可能状態
+------------------------------------------------------------------
+
+nmcli networking connectivity     インターネットへの接続可能状態を表す (none,portal,limited,full,unknown) * full => インターネットへ接続されていて、アクセス可能な状態
+
+man nmcli => /connectivity        manコマンドで各状態を調べる
+
+------------------------------------------------------------------
+  none
+      the host is not connected to any network.
+  portal
+      the host is behind a captive portal and cannot reach the full Internet.
+  limited
+      the host is connected to a network, but it has no access to the Internet.
+  full
+      the host is connected to a network and has full access to the Internet.
+  unknown
+      the connectivity status cannot be found out.
+------------------------------------------------------------------
+
+nmcli radio all                   WiFiの状態確認
+
+------------------------------------------------------------------
+[root@localhost ~]# nmcli radio all
+WIFI-HW  WIFI  WWAN-HW  WWAN
+有効     有効  有効     有効
+------------------------------------------------------------------
+
+nmcli connection show             ネットワークの接続情報一覧(showは付けなくても動作する)
+
+------------------------------------------------------------------
+[root@localhost ~]# nmcli connection show
+NAME     UUID                                  TYPE      DEVICE
+enp0s3   11b8e0ba-bd0a-43fa-bd4d-adb860fef1d4  ethernet  enp0s3      =>  外部ネットワークとの接続
+docker0  416c128d-fc70-42df-9560-133e9a8e87d7  bridge    docker0     =>  docker
+virbr0   730fb121-d8c7-434d-9887-c014720f5f03  bridge    virbr0
+------------------------------------------------------------------
+
+nmcli device status               ネットワークに接続しているデバイスの表示(カーネルの認識しているデバイスの表示)
+
+* device(カーネルの認識する物理インターフェス)にconnection(ネットワーク設定（IPアドレスなど）)を紐付け、個別に管理している
+https://endy-tech.hatenablog.jp/entry/2018/09/08/140950
+
+------------------------------------------------------------------
+[root@localhost ~]# nmcli device status
+DEVICE       TYPE      STATE            CONNECTION
+enp0s3       ethernet  接続済み          enp0s3
+docker0      bridge    接続済み (外部)    docker0
+virbr0       bridge    接続済み (外部)    virbr0
+vethce39e66  ethernet  管理無し           --
+lo           loopback  管理無し           --
+virbr0-nic   tun       管理無し           --
+------------------------------------------------------------------
+
+ip -c link show                   ネットワークデバイスの情報を表示
+
+------------------------------------------------------------------
+[root@localhost ~]# ip -c link show
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP mode DEFAULT group default qlen 1000
+    link/ether 08:00:27:cb:64:3c brd ff:ff:ff:ff:ff:ff
+3: virbr0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
+    link/ether 52:54:00:4f:1a:1b brd ff:ff:ff:ff:ff:ff
+4: virbr0-nic: <BROADCAST,MULTICAST> mtu 1500 qdisc fq_codel master virbr0 state DOWN mode DEFAULT group default qlen 1000
+    link/ether 52:54:00:4f:1a:1b brd ff:ff:ff:ff:ff:ff
+5: docker0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DEFAULT group default
+    link/ether 02:42:5f:3c:92:db brd ff:ff:ff:ff:ff:ff
+7: vethce39e66@if6: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master docker0 state UP mode DEFAULT group default 
+    link/ether 72:33:ce:a7:16:19 brd ff:ff:ff:ff:ff:ff link-netnsid 0
+
+*  mtu 1500 => 1パケットあたりの通信量
+------------------------------------------------------------------
+
+ip addr show                      IPアドレス情報を表示
+
+------------------------------------------------------------------
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host
+       valid_lft forever preferred_lft forever
+2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether 08:00:27:cb:64:3c brd ff:ff:ff:ff:ff:ff
+    inet 10.0.2.15/24 brd 10.0.2.255 scope global dynamic noprefixroute enp0s3     =>  virturlboxの設定によるが、10.0.2.15になることが多い？  https://www.sps-katoh.com/soliloquy/?p=108
+       valid_lft 61099sec preferred_lft 61099sec
+    inet6 fe80::a00:27ff:fecb:643c/64 scope link noprefixroute
+       valid_lft forever preferred_lft forever
+3: virbr0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default qlen 1000
+    link/ether 52:54:00:4f:1a:1b brd ff:ff:ff:ff:ff:ff
+    inet 192.168.122.1/24 brd 192.168.122.255 scope global virbr0        => 外部ネットワークに接続するIPアドレス
+       valid_lft forever preferred_lft forever
+4: virbr0-nic: <BROADCAST,MULTICAST> mtu 1500 qdisc fq_codel master virbr0 state DOWN group default qlen 1000
+    link/ether 52:54:00:4f:1a:1b brd ff:ff:ff:ff:ff:ff
+5: docker0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default
+    link/ether 02:42:5f:3c:92:db brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0           =>  dockerのプライベートIPアドレス
+       valid_lft forever preferred_lft forever
+    inet6 fe80::42:5fff:fe3c:92db/64 scope link
+       valid_lft forever preferred_lft forever
+------------------------------------------------------------------
+
+ip route show                      通信経路を表示
+
+------------------------------------------------------------------
+[root@localhost ~]# ip route show
+default via 10.0.2.2 dev enp0s3 proto dhcp metric 100                 =>  デフォルトゲートウェイの情報
+10.0.2.0/24 dev enp0s3 proto kernel scope link src 10.0.2.15 metric 100
+172.17.0.0/16 dev docker0 proto kernel scope link src 172.17.0.1      =>  dockerのプライベートIPアドレス
+192.168.122.0/24 dev virbr0 proto kernel scope link src 192.168.122.1 linkdown  =>  外部ネットワークに接続するIPアドレス
+------------------------------------------------------------------
+
+ip route add 192.168.122.0/24 via 172.17.0.2                          192.168.122.0/24の範囲で接続する場合は172.17.0.2をゲートウェイとして使用する
+traceroute 192.168.122.2                                              上記でdockerを経路にしているので表示される
+ip route del 192.168.122.0/24                                         通信経路の削除
+ip r                                                                  経路削除の確認
+traceroute 192.168.122.2                                              デフォルトゲートウェイが表示される
+
+ifconfig                                                              起動中のインターフェイスのネットワーク状態を確認
+ifconfig docker0                                                      サービス名を指定してネットワーク状態を確認
+ifconfig docker0 down                                                 サービスの停止
+
+------------------------------------------------------------------
+* サービスを停止できないエラーが発生  https://www.fixes.pub/linux/236091.html
+sudo ip addr flush dev docker0                                        IPアドレスを消去
+ifconfig docker0 172.17.0.2 netmask 255.255.255.0                     IPアドレスを再設定
+
+*  アドレスを変更してもサービスがダウンできない(ifconfigでdocker0はdown担っているが、ping 172.17.0.2でパケットは送信され、docker psでもコンテナがdownしていなかった)
+------------------------------------------------------------------
+
+
+```

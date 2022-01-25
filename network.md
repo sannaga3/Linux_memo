@@ -762,6 +762,7 @@ tcp                LISTEN            0             10                      [::]:
 -----------------------------------------------------------------
 
 ss -tn                              接続の確率しているポートのみ表示
+* ssコマンドについて  https://qiita.com/hana_shin/items/632b3a1eb44bf84e94f7
 
 -----------------------------------------------------------------
 [root@localhost ~]# ss -tn
@@ -780,4 +781,121 @@ ip -a                               10.0.2.15を使っているサービスを�
     inet6 fe80::a00:27ff:fecb:643c/64 scope link noprefixroute
        valid_lft forever preferred_lft forever
 -----------------------------------------------------------------
+
+ss -tup                            tcp,udpで接続しているソケット名とプロセスも表示
+
+-----------------------------------------------------------------
+[root@localhost ~]# ss -tup
+Netid        State        Recv-Q        Send-Q                  Local Address:Port                  Peer Address:Port          Process
+udp          ESTAB        0             0                    10.0.2.15%enp0s3:bootpc                    10.0.2.2:bootps         users:(("NetworkManager",pid=930,fd=26))
+tcp          ESTAB        0             0                           10.0.2.15:ssh                       10.0.2.2:62339          users:(("sshd",pid=1707,fd=5),("sshd",pid=1688,fd=5))
+tcp          ESTAB        0             0                           10.0.2.15:ssh                       10.0.2.2:51759          users:(("sshd",pid=13927,fd=5),("sshd",pid=13923,fd=5))
+-----------------------------------------------------------------
+```
+
+<hr>
+
+### DNS設定
+
+##### DNS
+
+IPアドレスとドメイン名(IPアドレスをsample.comなどのわかりやすい表記にしたもの)を紐付ける仕組み。ドメイン名とIPアドレスを相互変換することを名前解決という。  
+正引き => ドメイン名からIPアドレスを求めること  
+逆引き => IPアドレスからドメイン名を求めること
+
+```
+/etc/resolv.conf               名前解決に必要な情報が記述されている
+https://linuc.org/study/knowledge/507/
+
+-----------------------------------------------------------------
+search localdomain                    複数指定すると、順番に全て名前解決をしてくれる
+nameserver 192.168.11.1               名前解決に利用するDNSサーバのIPアドレス(複数記述可)
+-----------------------------------------------------------------
+
+/etc/nsswitch.conf             名前解決を行う優先順位を指定するファイル(名前解決だけでなく、ユーザアカウント情報、シャドウパスワードなど、さまざまな情報を参照する際の優先順位を指定している)
+
+cat /etc/nsswitch.conf | grep hosts  =>   hosts:   files dns myhostname
+* filesの指定によりローカルにあるファイル（/etc/hostsなど）が参照され、失敗するとdnsの指定により「/etc/resolv.conf」に指定したDNSサーバに問い合わせが行われる
+https://linuc.org/study/knowledge/508/
+
+myhostnameは /etc/hostname を参照する
+https://note.com/tech_share/n/nd58fb0b7b64f
+```
+
+##### hostコマンド
+
+ドメイン名からIPアドレス、あるいはIPアドレスからドメイン名を調べるコマンド。  
+https://atmarkit.itmedia.co.jp/ait/articles/1711/02/news017.html
+
+```
+host www.google.co.jp   =>   www.google.co.jp has address 172.217.175.227         ドメイン名からIPアドレスを調べる
+
+host -a www.google.co.jp
+```
+
+##### digコマンド
+
+DNSサーバに問い合わせることで、ドメイン名からIPアドレスを調べるコマンド（逆も可）  
+https://atmarkit.itmedia.co.jp/ait/articles/1711/09/news020.html
+https://hana-shin.hatenablog.com/entry/2021/12/22/201022
+
+```
+ dig www.google.co.jp
+
+-----------------------------------------------------------------
+[nagasan@localhost ~]$ dig www.google.co.jp
+
+; <<>> DiG 9.11.26-RedHat-9.11.26-6.el8 <<>> www.google.co.jp
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 45253
+;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 4, ADDITIONAL: 5
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 1232
+;; QUESTION SECTION:
+;www.google.co.jp.		IN	A
+
+;; ANSWER SECTION:
+www.google.co.jp.	113	IN	A	172.217.175.227
+
+;; AUTHORITY SECTION:
+google.co.jp.		63024	IN	NS	ns1.google.com.
+google.co.jp.		63024	IN	NS	ns4.google.com.
+google.co.jp.		63024	IN	NS	ns2.google.com.
+google.co.jp.		63024	IN	NS	ns3.google.com.
+
+;; ADDITIONAL SECTION:
+ns1.google.com.		262240	IN	A	216.239.32.10
+ns2.google.com.		263259	IN	A	216.239.34.10
+ns3.google.com.		247795	IN	A	216.239.36.10
+ns4.google.com.		286625	IN	A	216.239.38.10
+
+* 解説
+http://nihon2.com/linux%E3%81%A7dig%E3%82%B3%E3%83%9E%E3%83%B3%E3%83%89%E3%82%92%E4%BD%BF%E7%94%A8%E3%81%99%E3%82%8B%E6%96%B9%E6%B3%95
+-----------------------------------------------------------------
+
+*  権威サーバー
+インターネットドメイン名は階層構造になっており、管理権限も階層に沿って移譲され、分散管理されている。
+権威DNSサーバは自らが管理権限を有するドメイン名空間（ゾーンと呼ばれる）についての情報を保持し、外部からの問い合わせにに回答する。
+権威DNSサーバはプライマリDNSサーバとセカンダリDNSサーバ(複数可)で2系統以上用意することで、障害時などに対応する。
+
+https://e-words.jp/w/%E6%A8%A9%E5%A8%81DNS%E3%82%B5%E3%83%BC%E3%83%90.html
+https://jprs.jp/glossary/index.php?ID=0145
+https://www.nic.ad.jp/ja/basics/terms/authoritative-nameserver.html
+https://qiita.com/hypermkt/items/610b5042d290348a9dfa
+```
+
+### getentコマンド
+
+データベースの情報を閲覧するコマンド
+
+```
+キーに関する情報を取得できる
+getent group
+getent hosts
+getent network
+getent passwd
+getent services
+getent shadow
 ```

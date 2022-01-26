@@ -886,9 +886,10 @@ https://www.nic.ad.jp/ja/basics/terms/authoritative-nameserver.html
 https://qiita.com/hypermkt/items/610b5042d290348a9dfa
 ```
 
-### getentコマンド
+##### getentコマンド
 
-データベースの情報を閲覧するコマンド
+データベースの情報を閲覧するコマンド  
+https://webkaru.net/linux/getent-command/
 
 ```
 キーに関する情報を取得できる
@@ -899,3 +900,10 @@ getent passwd
 getent services
 getent shadow
 ```
+
+##### MXレコード
+
+mail exchanger record。ドメイン宛ての電子メールをどのアドレスに配送すればいいかを指定したもの。  
+トラブルで応答がない場合にはMX値の大きいものに配送先が切り替わっていくように、アドレスの優先順位を設定する。  
+
+https://wa3.i-3-i.info/word12287.html

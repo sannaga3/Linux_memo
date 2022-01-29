@@ -1,4 +1,4 @@
-### インターネットプロトコル
+### インターネットプロトコル(102)
 
 /etc/services  TCP及びUDPのポート番号とそのポートが利用するサービスを対応させるファイル  
 https://linuc.org/study/knowledge/511/

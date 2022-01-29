@@ -1,4 +1,4 @@
-### システム管理
+### システム管理(102)
 
 #### アカウント管理
 
@@ -355,4 +355,161 @@ crontab -e                                         test2 ではない為エラ�
 exit
 
 vim /etc/cron.deny                                 cronを使用禁止にするユーザを記述
+
+
+・atコマンドを使ったジョブスケジュール設定
+https://access.redhat.com/documentation/ja-jp/red_hat_enterprise_linux/7/html/system_administrators_guide/sect-scheduling_a_job_to_run_at_a_specific_time_using_at
+https://uxmilk.jp/53442
+
+yum install at
+systemctl enable atd.service
+systemctl start atd.service
+
+at now +1minutes       ジョブの作成
+
+-----------------------------------------------------------
+[root@localhost ~]# at now + 1min
+warning: commands will be executed using /bin/sh
+at> uptime >> $HOME/uptime_at.log
+at> <EOT>
+job 8 at Thu Jan 27 14:13:00 2022
+-----------------------------------------------------------
+
+atq                    atコマンドで登録されたジョブを一覧表示
+at -l                  実行予定のジョブを表示
+
+-----------------------------------------------------------
+[root@localhost ~]# atq
+9	Thu Jan 27 14:24:00 2022 a root
+-----------------------------------------------------------
+
+cat uptime_at.log      1分後に作成される
+
+vi /etc/at.allow       ユーザ名を記述
+exit                   at.allowに記述したユーザであればスケジュールの設定ができる
+* /etc/at.deny に記述すればatコマンドの使用禁止
+
+
+・anacrontab
+cronは指定日時に実行されるが、anacrontabはある範囲の中で実行する。rootユーザのみが実行可能。
+https://4thsight.xyz/349
+
+-----------------------------------------------------------
+[root@localhost ~]# vi /etc/anacrontab
+
+# /etc/anacrontab: configuration file for anacron
+
+# See anacron(8) and anacrontab(5) for details.
+
+SHELL=/bin/sh
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+MAILTO=root
+# the maximal random delay added to the base delay of the jobs
+RANDOM_DELAY=45            *  実行時間を遅らせる最大値
+# the jobs will be started during the following hours only
+START_HOURS_RANGE=3-22     *  実行する時間の範囲
+
+#period in days   delay in minutes   job-identifier   command
+1       5       cron.daily              nice run-parts /etc/cron.daily
+7       25      cron.weekly             nice run-parts /etc/cron.weekly
+@monthly 45     cron.monthly            nice run-parts /etc/cron.monthly
+
+＊ dailyのスケジュールを実行する場合 5分 + 45分で最大で50分遅延する
+-----------------------------------------------------------
+```
+
+<hr>
+
+### ローカライゼーションと国際化
+
+##### localeコマンド
+
+ロケールについて設定する環境変数。言語_地域.文字コードで表記する。  
+ja_JP.UTF-8 => 日本語_日本.UTF-8  
+https://atmarkit.itmedia.co.jp/ait/articles/1812/06/news038.html
+
+```
+locale              ロケール設定を表示
+
+-----------------------------------------------------------
+LANG=ja_JP.UTF-8
+LC_CTYPE="ja_JP.UTF-8"             *  文字の分類
+LC_NUMERIC="ja_JP.UTF-8"           *  数値入力の形式
+LC_TIME="ja_JP.UTF-8"              *  時刻の表示形式
+LC_COLLATE="ja_JP.UTF-8"
+LC_MONETARY="ja_JP.UTF-8"          *  金額の表記
+LC_MESSAGES="ja_JP.UTF-8"          *  出力されるメッセージの言語
+LC_PAPER="ja_JP.UTF-8"
+LC_NAME="ja_JP.UTF-8"
+LC_ADDRESS="ja_JP.UTF-8"
+LC_TELEPHONE="ja_JP.UTF-8"
+LC_MEASUREMENT="ja_JP.UTF-8"
+LC_IDENTIFICATION="ja_JP.UTF-8"
+LC_ALL=                            *  ロケール情報を全項目に設定
+-----------------------------------------------------------
+
+locale -a           使用可能なロケール一覧を表示
+
+export LC_ALL=C.utf8               ロケールを英語に変更
+export LC_ALL=ja_JP.utf8           ロケールを日本語に変更
+
+・ファイルの文字変換
+vi locale.txt  =>  あいうえお を記述
+iconv -f utf8 -t sjis locale.txt > locale_sjis.txt       utf-8の「あいうえお」をsjisに変換し別ファイルに出力
+cat locale_sjis.txt                                       OSの文字コードがUTF−8なので文字化けしている
+
+-----------------------------------------------------------
+以下でCentOS8にSJISを追加する                                https://qiita.com/chibiharu/items/46ea4ac43bdfb8966c93
+yum install glibc-locale-source
+localedef -f SHIFT_JIS -i ja_JP ja_JP.SJIS                エラーは出るが文字マップは作成されている
+export LANG=ja_JP.SJIS
+-----------------------------------------------------------
+
+SJISを追加後に cat locale_sjis.txt しても文字化けが治らない
+
+以下を参考に進める
+https://uso59634.hatenablog.jp/entry/2019/12/08/012741
+https://www.si1230.com/?p=43981
+
+-----------------------------------------------------------
+localectl status   =>  System Locale: LANG=ja_JP.UTF-8    システムロケール設定が日本語のまま(localeコマンドで確認するとja_JP.SJISに変更できているように見える)
+localectl list-locales  =>  ja_JP.sjis を発見
+localectl set-locale LANG=ja_JP.shis
+localectl status => System Locale: LANG=ja_JP.sjis に変更されているのを確認
+
+cat locale_sjis.txt =>  文字化けの状態から変化なし
+-----------------------------------------------------------
+
+* sjis => utf-8 に戻すとどうなるか確認してみる
+iconv -f sjis -t utf8 locale_sjis.txt > locale_utf8.txt
+cat locale_utf8.txt  =>  あいうえお が表示される為、文字コードの変換は正しくできているようだ
+
+これ以上sjisの言語設定で良さそうな記事が見つからない為中断。
+```
+
+##### iconv
+
+文字コードを変換するコマンド
+
+```
+iconv -f        変換前の文字コード
+iconv -t        変換後の文字コード
+iconv -l        対応文字コード一覧
+```
+
+##### 文字コード
+
+符号化文字集合と文字符号化方式に区別される。符号化文字集合をコンピュータで処理する為に符号化形式で数値に変換する。  
+
+https://www.ogis-ri.co.jp/otc/hiroba/technical/program_standards/part1.html  
+https://www.gixo.jp/blog/12465/
+
+```
+
+* 符号化文字集合                文字と一意に振られた番号のペアの集合。JIS X 0201、JIS X 0208、Unicode ASCII
+Unicode(符号化文字集合)         世界中の文字を、1つのコード体系で切り替えを行わずに扱える。
+ASCII                         7bitコード。米国の国内規格。制御文字、数字、ラテン文字、記号等を扱える。
+
+* 文字符号化方式                文字に振られた番号をバイト表現に変換する方法。   Shift_JIS、UTF-8、UTF-16
+UTF-8                         Unicodeをベースにし、ASCIIコードの文字に世界中の文字を加えたもの。
 ```

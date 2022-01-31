@@ -508,8 +508,93 @@ https://www.gixo.jp/blog/12465/
 
 * 符号化文字集合                文字と一意に振られた番号のペアの集合。JIS X 0201、JIS X 0208、Unicode ASCII
 Unicode(符号化文字集合)         世界中の文字を、1つのコード体系で切り替えを行わずに扱える。
-ASCII                         7bitコード。米国の国内規格。制御文字、数字、ラテン文字、記号等を扱える。
+ASCII                         7bitコード。米国の国内規格。128種類の英数字、記号、制御コード
 
 * 文字符号化方式                文字に振られた番号をバイト表現に変換する方法。   Shift_JIS、UTF-8、UTF-16
 UTF-8                         Unicodeをベースにし、ASCIIコードの文字に世界中の文字を加えたもの。
+```
+
+<hr>
+
+### 時刻設定
+
+#### システムクロックとハードウェアクロック
+
+```
+システムクロック       OSがメモリ上で管理する時計。NTPを元にファイル管理などに用いる。シャットダウンすると情報が消える。     dateコマンド
+ハードウェアクロック    マザーボードで管理され、シャットダウン時に時刻情報を保つ。OS起動時はハードウェアクロックを参照する。   hwclockコマンド
+
+https://linuc.org/study/knowledge/442/
+https://qiita.com/miyuki_samitani/items/419db6a13ddf0f350a9f
+
+・時刻合わせ(CentOS8)
+NTP => Chrony に変更
+ChronyはNTPのntpコマンドより効率よく正確に時刻を同期できる。デフォルトの使用ポート123。NTPサーバと時刻が大きくずれている場合は少しずつ修正が行われる。
+
+chronyd    デーモンプロセス
+chronyc    クライアントコマンド
+設定ファイル /etc/chrony.conf
+
+less /etc/chrony.conf
+
+----------------- chrony.conf --------------------------
+# Use public servers from the pool.ntp.org project.
+# Please consider joining the pool (http://www.pool.ntp.org/join.html).
+pool 2.centos.pool.ntp.org iburst       =>     ntpサーバーの接続先
+--------------------------------------------------------
+
+systemctl start chronyd
+chronyc makestep            ntpサーバから日時を取得し、システムクロックに同期
+hwclock -w                  ハードウェアクロックの時刻をシステムクロックの時刻に設定
+
+https://qiita.com/thzking/items/c2bcf7d60963b4dab7b6
+https://qiita.com/legitwhiz/items/5b2d56ce9a0ee29a24f9
+```
+
+##### タイムゾーンに関して
+
+```
+/etc/timezone        Debianのタイムゾーン設定ファイル
+/etc/localtime       CentOsのタイムゾーン設定ファイル。/usr/share/zoneinfo/(各タイムゾーンに対応したファイルが格納)へのシンボリックリンクが貼ってある
+https://linuc.org/study/knowledge/516/
+
+timedatectl status   時刻情報の確認
+
+--------------------------------------------------------
+[root@localhost ~]# timedatectl status
+               Local time: 月 2022-01-31 13:04:59 JST
+           Universal time: 月 2022-01-31 04:04:59 UTC
+                 RTC time: 月 2022-01-31 04:04:59
+                Time zone: Asia/Tokyo (JST, +0900)       =>  タイムゾーンの設定情報
+System clock synchronized: yes
+              NTP service: active
+          RTC in local TZ: no
+--------------------------------------------------------
+
+ls /usr/share/zoneinfo/Asia | grep Tokyo   =>   タイムゾーンの地域でTokyoの確認。timedatectl list-timezones | grep Tokyo でもOK
+https://eng-entrance.com/linux-time-timezone
+
+ln -sf  /usr/share/zoneinfo/Asia/Tokyo /etc/localtime    Tokyoの部分を別の都市名にすることで、アジアの他の国のタイムゾーンに設定変更。
+https://qiita.com/azusanakano/items/b39bd22504313884a7c3
+```
+
+##### TZ
+
+環境変数TZは /etc/localtime よりも優先される
+
+```
+export TZ="Asia/Tokyo"        環境変数の為、現在のユーザーにしか適用されない
+
+tzselect                      利用可能なタイムゾーンを確認
+tzconfig                      Debianのタイムゾーン設定コマンド
+```
+
+・時刻表示など
+
+```
+date "+%Y /%m /%d"         =>   2022 /01 /31(システムクロック)
+hwclock -r                 =>   2022-01-31 13:22:28.321912+09:00(ハードウェアクロック)
+date -s '2022/1/27 9:11'        システムクロックの変更
+hwclock -s                      ハードウェアクロックの時刻をシステムクロックの時刻に同期
+ls -l /etc/localtime            タイムゾーンのシンボリックリンク表示
 ```
